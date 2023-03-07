@@ -1,9 +1,9 @@
 #include "custom_hid.hpp"
 #include "tusb.h"
 
-class KeyboardTremolo : public IKeyboardFx {
+class KeyboardPassthrough : public IKeyboardFx {
  public:
-  KeyboardTremolo() {}
+  KeyboardPassthrough() {}
 
   void initialize() { log_line("keyboard trem init"); }
 
@@ -15,5 +15,7 @@ class KeyboardTremolo : public IKeyboardFx {
 
   void update_parameter(float percentage) {}
 
-  void process_keyboard_report(hid_keyboard_report_t const *report) {/*TODO*/}
+  void process_keyboard_report(hid_keyboard_report_t const *report) {
+    send_keyboard_report(report->modifier, report->reserved, report->keycode);
+  }
 };

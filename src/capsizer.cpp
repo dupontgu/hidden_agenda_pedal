@@ -30,8 +30,10 @@
 
 #include "bsp/board.h"
 #include "hardware/structs/rosc.h"
+#include "kbd_fx/kbd_fx_passthrough.hpp"
 #include "kbd_fx/kbd_fx_tremolo.hpp"
 #include "mouse_fx/mouse_fx_fuzz.hpp"
+#include "mouse_fx/mouse_fx_passthrough.hpp"
 #include "pico/bootrom.h"
 #include "pico/multicore.h"
 #include "pico/stdlib.h"
@@ -59,9 +61,11 @@
 #define SW_MODE_SET 2
 
 MouseFuzz mouse_fuzz;
+MousePassthrough mouse_passthrough;
 KeyboardTremolo keyboard_tremolo;
-static IMouseFx* mouse_fx[] = {&mouse_fuzz};
-static IKeyboardFx* keyboard_fx[] = {&keyboard_tremolo};
+KeyboardPassthrough keyboard_passthrough;
+static IMouseFx* mouse_fx[] = {&mouse_passthrough, &mouse_fuzz};
+static IKeyboardFx* keyboard_fx[] = {&keyboard_passthrough, &keyboard_tremolo};
 static uint8_t active_device_type = HID_ITF_PROTOCOL_KEYBOARD;
 static bool fx_enabled = true;
 static uint8_t active_fx_slot = 0;
@@ -166,6 +170,11 @@ void init_pix() {
 void send_mouse_report(uint8_t buttons, int8_t x, int8_t y, int8_t wheel,
                        int8_t pan) {
   tud_hid_mouse_report(REPORT_ID_MOUSE, buttons, x, y, wheel, pan);
+}
+
+void send_keyboard_report(uint8_t modifier, uint8_t reserved,
+                          const uint8_t keycode[6]) {
+  tud_hid_keyboard_report(REPORT_ID_KEYBOARD, modifier, (uint8_t*)keycode);
 }
 
 static inline void set_pixel(uint32_t pixel_grb) {
@@ -373,8 +382,9 @@ static void process_mouse_report(uint8_t dev_addr,
 
 void tuh_hid_report_received_cb(uint8_t dev_addr, uint8_t instance,
                                 uint8_t const* report, uint16_t len) {
-  (void)len;
   uint8_t const itf_protocol = tuh_hid_interface_protocol(dev_addr, instance);
+  log_line("report %u %u %u %u %u %u", len, itf_protocol, report[0], report[1],
+           report[2], report[3]);
 
   switch (itf_protocol) {
     case HID_ITF_PROTOCOL_KEYBOARD:
@@ -382,7 +392,13 @@ void tuh_hid_report_received_cb(uint8_t dev_addr, uint8_t instance,
       break;
 
     case HID_ITF_PROTOCOL_MOUSE:
-      process_mouse_report(dev_addr, (hid_mouse_report_t const*)report);
+      if (len == 8) {
+          process_mouse_report(dev_addr,
+                               (hid_mouse_report_t const*)(report + 1));
+      } else if (len > 3) {
+        // some reports of len 3 are consumer control messages?
+        process_mouse_report(dev_addr, (hid_mouse_report_t const*)report);
+      }
       break;
 
     default:
