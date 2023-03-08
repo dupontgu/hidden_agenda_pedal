@@ -29,6 +29,7 @@
 #include <string.h>
 
 #include "bsp/board.h"
+#include "hardware/adc.h"
 #include "hardware/structs/rosc.h"
 #include "kbd_fx/kbd_fx_passthrough.hpp"
 #include "kbd_fx/kbd_fx_tremolo.hpp"
@@ -49,11 +50,13 @@
 
 #define RANDOM_BIT (rosc_hw->randombit ? 1 : 0)
 // TODO update this
-#define SOFT_BOOT_BTN_GPIO 29
-// TODO delete this
-#define PIX_POWER_GPIO 11
+#define SOFT_BOOT_BTN_GPIO 0
 // TODO update this
-#define PIX_DATA_GPIO 12
+#define PIX_DATA_GPIO 29
+#define FOOT_SW_GPIO 28
+#define TOGGLE_1_GPIO 6
+#define TOGGLE_2_GPIO 7
+#define KNOB_ADC_GPIO 26
 
 #define PIX_PIO pio0
 #define PIX_PIO_SM 2
@@ -61,9 +64,11 @@
 #define MAX_FX 4
 #define MAX_REPORT 4
 
-#define SW_MODE_MOM 0
-#define SW_MODE_LATCH 1
-#define SW_MODE_SET 2
+#define SW_MODE_SET 0
+#define SW_MODE_MOM 1
+#define SW_MODE_LATCH 2
+
+#define ADC_DEAD_ZONE 0.01f
 
 static struct {
   uint8_t report_count;
@@ -71,17 +76,25 @@ static struct {
 } hid_info[CFG_TUH_HID];
 
 MouseFuzz mouse_fuzz;
-MousePassthrough mouse_passthrough;
+MousePassthrough mouse_passthrough(0x002F2F2F);
 KeyboardTremolo keyboard_tremolo;
 KeyboardPassthrough keyboard_passthrough;
-static IMouseFx* mouse_fx[] = {&mouse_passthrough, &mouse_fuzz};
-static IKeyboardFx* keyboard_fx[] = {&keyboard_passthrough, &keyboard_tremolo};
+// LAST FX (at index MAX_FX) should always be passthrough! This is what gets run
+// when pedal is "off"
+static IMouseFx* mouse_fx[] = {&mouse_passthrough, &mouse_passthrough,
+                               &mouse_passthrough, &mouse_passthrough,
+                               &mouse_passthrough};
+static IKeyboardFx* keyboard_fx[] = {
+    &keyboard_passthrough, &keyboard_passthrough, &keyboard_passthrough,
+    &keyboard_passthrough, &keyboard_passthrough};
 static uint8_t active_device_type = HID_ITF_PROTOCOL_KEYBOARD;
 static bool fx_enabled = true;
 static uint8_t active_fx_slot = 0;
 static uint8_t active_sw_mode = SW_MODE_SET;
 static bool previous_foot_sw_value = 0;
 static uint32_t time_of_last_pix_update = 0;
+static uint32_t time_of_last_io_update = 0;
+static float previous_adc_reading = -1.0f;
 
 void log_line(const char* format, ...) {
   char buffer[256];
@@ -112,14 +125,25 @@ void on_fx_param_tweaked(float percentage) {
 }
 
 void read_pot() {
-  // TODO read ADC
-  float percentage = 0.0;
+  // expand range so we'll def get 0 and 1 on the ends
+  float adc = ((((float)adc_read() / 4096.0f) * 1.03f) - 0.015);
+  // clamp to range 0..1
+  adc = adc < 0.0f ? 0.0f : (adc > 1.0f ? 1.0f : adc);
+  float delta = previous_adc_reading - adc;
+  // is there a less terrible way to write this? perhaps.
+  if (!(adc == 1.0f && previous_adc_reading != 1.0f) &&
+      !(adc == 0.0f && previous_adc_reading != 0.0f) && delta < ADC_DEAD_ZONE &&
+      delta > -ADC_DEAD_ZONE) {
+    return;
+  }
+  previous_adc_reading = adc;
   if (active_sw_mode != SW_MODE_SET) {
-    on_fx_param_tweaked(percentage);
+    on_fx_param_tweaked(adc);
   } else {
-    // TODO
-    uint8_t slot = percentage * MAX_FX;
+    uint8_t slot = adc * MAX_FX;
+    if (slot == MAX_FX) slot--;
     if (slot != active_fx_slot) {
+      log_line("fx slot: %u", slot);
       mouse_fx[slot]->initialize();
       keyboard_fx[slot]->initialize();
     }
@@ -129,12 +153,13 @@ void read_pot() {
 
 void read_foot_switch() {
   // TODO read gpio
-  bool current_val = 0;
+  bool current_val = gpio_get(FOOT_SW_GPIO);
   if (current_val == previous_foot_sw_value) {
     return;
   }
+  log_line("foot switch: %u", (uint8_t)current_val);
   previous_foot_sw_value = current_val;
-  if (active_sw_mode == SW_MODE_LATCH) {
+  if (active_sw_mode == SW_MODE_LATCH && current_val) {
     fx_enabled = !fx_enabled;
   } else if (active_sw_mode == SW_MODE_MOM) {
     fx_enabled = current_val;
@@ -142,10 +167,11 @@ void read_foot_switch() {
 }
 
 void read_toggle_switch() {
-  // TODO read gpio
-  uint8_t current_val = SW_MODE_SET;
+  uint8_t current_val = (gpio_get(TOGGLE_1_GPIO) ? 0 : 0b01) |
+                        (gpio_get(TOGGLE_2_GPIO) ? 0 : 0b10);
   // if we're switching modes, disable the fx
   if (current_val != active_sw_mode) {
+    log_line("toggle switch: %u", current_val);
     fx_enabled = false;
   }
   active_sw_mode = current_val;
@@ -166,15 +192,28 @@ void init_soft_boot() {
 }
 
 void init_pix() {
-  // NEO_PWR
-  gpio_init(PIX_POWER_GPIO);
-  gpio_set_dir(PIX_POWER_GPIO, GPIO_OUT);
-  gpio_put(PIX_POWER_GPIO, 1);
-
   uint offset = pio_add_program(PIX_PIO, &ws2812_program);
 
   ws2812_program_init(PIX_PIO, PIX_PIO_SM, offset, PIX_DATA_GPIO, 800000,
                       false);
+}
+
+void init_io() {
+  gpio_init(TOGGLE_1_GPIO);
+  gpio_set_dir(TOGGLE_1_GPIO, GPIO_IN);
+  gpio_pull_up(TOGGLE_1_GPIO);
+
+  gpio_init(TOGGLE_2_GPIO);
+  gpio_set_dir(TOGGLE_2_GPIO, GPIO_IN);
+  gpio_pull_up(TOGGLE_2_GPIO);
+
+  gpio_init(FOOT_SW_GPIO);
+  gpio_set_dir(FOOT_SW_GPIO, GPIO_IN);
+  gpio_pull_up(FOOT_SW_GPIO);
+
+  adc_init();
+  adc_gpio_init(KNOB_ADC_GPIO);
+  adc_select_input(0);
 }
 
 void send_mouse_report(uint8_t buttons, int8_t x, int8_t y, int8_t wheel,
@@ -197,10 +236,6 @@ void led_task() {
     return;
   }
   time_of_last_pix_update = t;
-  if (!fx_enabled) {
-    set_pixel(0);
-    return;
-  }
   uint32_t color = 0;
   if (active_sw_mode == SW_MODE_SET) {
     if (active_device_type == HID_ITF_PROTOCOL_KEYBOARD) {
@@ -208,7 +243,7 @@ void led_task() {
     } else {
       color = mouse_fx[active_fx_slot]->get_indicator_color();
     }
-  } else {
+  } else if(fx_enabled) {
     if (active_device_type == HID_ITF_PROTOCOL_KEYBOARD) {
       color = keyboard_fx[active_fx_slot]->get_current_pixel_value(t);
     } else {
@@ -219,6 +254,11 @@ void led_task() {
 }
 
 void io_task() {
+  uint32_t t = to_ms_since_boot(get_absolute_time()) / 20;
+  if (t == time_of_last_io_update) {
+    return;
+  }
+  time_of_last_io_update = t;
   read_toggle_switch();
   read_foot_switch();
   read_pot();
@@ -255,6 +295,7 @@ int main(void) {
   tud_init(BOARD_TUD_RHPORT);
   init_soft_boot();
   init_pix();
+  init_io();
 
   mouse_fx[active_fx_slot]->initialize();
   keyboard_fx[active_fx_slot]->initialize();
@@ -384,6 +425,7 @@ static inline bool find_key_in_report(hid_keyboard_report_t const* report,
 static void process_kbd_report(uint8_t dev_addr,
                                hid_keyboard_report_t const* report) {
   (void)dev_addr;
+  // TODO
   tud_hid_keyboard_report(REPORT_ID_KEYBOARD, report->modifier,
                           (uint8_t*)report->keycode);
 }
@@ -392,7 +434,8 @@ static void process_kbd_report(uint8_t dev_addr,
 static void process_mouse_report(uint8_t dev_addr,
                                  hid_mouse_report_t const* report) {
   (void)dev_addr;
-  mouse_fx[active_fx_slot]->process_mouse_report(report);
+  uint8_t slot = fx_enabled ? active_fx_slot : MAX_FX; 
+  mouse_fx[slot]->process_mouse_report(report);
 }
 
 void tuh_hid_report_received_cb(uint8_t dev_addr, uint8_t instance,
@@ -400,10 +443,14 @@ void tuh_hid_report_received_cb(uint8_t dev_addr, uint8_t instance,
   uint8_t itf_protocol = HID_ITF_PROTOCOL_NONE;
   uint8_t const* report_offset = report;
 
-  // handle composite reports
   if (hid_info[instance].report_count > 1) {
+    // we know this is a composite report, so extract the id and start the
+    // reading the data one byte over
     report_offset = report + 1;
     uint8_t id = report[0];
+
+    // find the tuh_hid_report_info_t that matches the id of the report we just
+    // received
     for (size_t i = 0; i < hid_info[instance].report_count; i++) {
       tuh_hid_report_info_t info = hid_info[instance].report_info[i];
       if (info.report_id == id) {
@@ -414,6 +461,7 @@ void tuh_hid_report_received_cb(uint8_t dev_addr, uint8_t instance,
             itf_protocol = HID_ITF_PROTOCOL_KEYBOARD;
           }
         }
+        // TODO handle other usage pages, Consume Control,
         break;
       }
     }
@@ -429,6 +477,7 @@ void tuh_hid_report_received_cb(uint8_t dev_addr, uint8_t instance,
     case HID_ITF_PROTOCOL_MOUSE:
       process_mouse_report(dev_addr, (hid_mouse_report_t const*)report_offset);
       break;
+
     default:
       break;
   }

@@ -22,6 +22,6 @@ target_compile_definitions(${target_name} PRIVATE PIO_USB_USE_TINYUSB)
 # needed so tinyusb can find tusb_config.h
 target_include_directories(${target_name} PRIVATE ${CMAKE_CURRENT_LIST_DIR})
 
-target_link_libraries(${target_name} PRIVATE pico_stdlib pico_pio_usb tinyusb_device tinyusb_host)
+target_link_libraries(${target_name} PRIVATE pico_stdlib pico_pio_usb tinyusb_device tinyusb_host hardware_adc)
 pico_add_extra_outputs(${target_name})
 
