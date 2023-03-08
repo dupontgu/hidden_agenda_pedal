@@ -43,6 +43,10 @@
 #include "usb_descriptors.h"
 #include "ws2812.pio.h"
 
+#define GENERIC_DESKTOP_USAGE_PAGE 0x01
+#define USAGE_MOUSE 0x02
+#define USAGE_KEYBOARD 0x06
+
 #define RANDOM_BIT (rosc_hw->randombit ? 1 : 0)
 // TODO update this
 #define SOFT_BOOT_BTN_GPIO 29
@@ -55,10 +59,16 @@
 #define PIX_PIO_SM 2
 
 #define MAX_FX 4
+#define MAX_REPORT 4
 
 #define SW_MODE_MOM 0
 #define SW_MODE_LATCH 1
 #define SW_MODE_SET 2
+
+static struct {
+  uint8_t report_count;
+  tuh_hid_report_info_t report_info[MAX_REPORT];
+} hid_info[CFG_TUH_HID];
 
 MouseFuzz mouse_fuzz;
 MousePassthrough mouse_passthrough;
@@ -329,12 +339,17 @@ void tud_hid_set_report_cb(uint8_t instance, uint8_t report_id,
 // it will be skipped therefore report_desc = NULL, desc_len = 0
 void tuh_hid_mount_cb(uint8_t dev_addr, uint8_t instance,
                       uint8_t const* desc_report, uint16_t desc_len) {
-  (void)desc_report;
-  (void)desc_len;
-
   // Interface protocol (hid_interface_protocol_enum_t)
   const char* protocol_str[] = {"None", "Keyboard", "Mouse"};
   uint8_t const itf_protocol = tuh_hid_interface_protocol(dev_addr, instance);
+
+  hid_info[instance].report_count = tuh_hid_parse_report_descriptor(
+      hid_info[instance].report_info, MAX_REPORT, desc_report, desc_len);
+  log_line("HID has %u reports", hid_info[instance].report_count);
+  for (size_t i = 0; i < hid_info[instance].report_count; i++) {
+    tuh_hid_report_info_t r = hid_info[instance].report_info[i];
+    log_line("report id: %u, report usage: %u", r.report_id, r.usage);
+  }
 
   uint16_t vid, pid;
   tuh_vid_pid_get(dev_addr, &vid, &pid);
@@ -382,25 +397,38 @@ static void process_mouse_report(uint8_t dev_addr,
 
 void tuh_hid_report_received_cb(uint8_t dev_addr, uint8_t instance,
                                 uint8_t const* report, uint16_t len) {
-  uint8_t const itf_protocol = tuh_hid_interface_protocol(dev_addr, instance);
-  log_line("report %u %u %u %u %u %u", len, itf_protocol, report[0], report[1],
-           report[2], report[3]);
+  uint8_t itf_protocol = HID_ITF_PROTOCOL_NONE;
+  uint8_t const* report_offset = report;
+
+  // handle composite reports
+  if (hid_info[instance].report_count > 1) {
+    report_offset = report + 1;
+    uint8_t id = report[0];
+    for (size_t i = 0; i < hid_info[instance].report_count; i++) {
+      tuh_hid_report_info_t info = hid_info[instance].report_info[i];
+      if (info.report_id == id) {
+        if (info.usage_page == GENERIC_DESKTOP_USAGE_PAGE) {
+          if (info.usage == USAGE_MOUSE) {
+            itf_protocol = HID_ITF_PROTOCOL_MOUSE;
+          } else if (info.usage == USAGE_KEYBOARD) {
+            itf_protocol = HID_ITF_PROTOCOL_KEYBOARD;
+          }
+        }
+        break;
+      }
+    }
+  } else {
+    itf_protocol = tuh_hid_interface_protocol(dev_addr, instance);
+  }
 
   switch (itf_protocol) {
     case HID_ITF_PROTOCOL_KEYBOARD:
-      process_kbd_report(dev_addr, (hid_keyboard_report_t const*)report);
+      process_kbd_report(dev_addr, (hid_keyboard_report_t const*)report_offset);
       break;
 
     case HID_ITF_PROTOCOL_MOUSE:
-      if (len == 8) {
-          process_mouse_report(dev_addr,
-                               (hid_mouse_report_t const*)(report + 1));
-      } else if (len > 3) {
-        // some reports of len 3 are consumer control messages?
-        process_mouse_report(dev_addr, (hid_mouse_report_t const*)report);
-      }
+      process_mouse_report(dev_addr, (hid_mouse_report_t const*)report_offset);
       break;
-
     default:
       break;
   }
