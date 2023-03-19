@@ -49,6 +49,7 @@
 #define USAGE_KEYBOARD 0x06
 
 #define RANDOM_BIT (rosc_hw->randombit ? 1 : 0)
+#define MS_SINCE_BOOT to_ms_since_boot(get_absolute_time())
 // TODO update this
 #define SOFT_BOOT_BTN_GPIO 0
 // TODO update this
@@ -85,15 +86,15 @@ static IMouseFx* mouse_fx[] = {&mouse_passthrough, &mouse_passthrough,
                                &mouse_passthrough, &mouse_passthrough,
                                &mouse_passthrough};
 static IKeyboardFx* keyboard_fx[] = {
-    &keyboard_passthrough, &keyboard_passthrough, &keyboard_passthrough,
+    &keyboard_passthrough, &keyboard_tremolo, &keyboard_passthrough,
     &keyboard_passthrough, &keyboard_passthrough};
 static uint8_t active_device_type = HID_ITF_PROTOCOL_KEYBOARD;
 static bool fx_enabled = true;
 static uint8_t active_fx_slot = 0;
 static uint8_t active_sw_mode = SW_MODE_SET;
 static bool previous_foot_sw_value = 0;
-static uint32_t time_of_last_pix_update = 0;
-static uint32_t time_of_last_io_update = 0;
+static uint32_t frame_of_last_pix_update = 0;
+static uint32_t frame_of_last_io_update = 0;
 static float previous_adc_reading = -1.0f;
 
 void log_line(const char* format, ...) {
@@ -144,8 +145,9 @@ void read_pot() {
     if (slot == MAX_FX) slot--;
     if (slot != active_fx_slot) {
       log_line("fx slot: %u", slot);
-      mouse_fx[slot]->initialize();
-      keyboard_fx[slot]->initialize();
+      uint32_t time_ms = MS_SINCE_BOOT;
+      mouse_fx[slot]->initialize(time_ms);
+      keyboard_fx[slot]->initialize(time_ms);
     }
     active_fx_slot = slot;
   }
@@ -230,38 +232,43 @@ static inline void set_pixel(uint32_t pixel_grb) {
   pio_sm_put_blocking(PIX_PIO, PIX_PIO_SM, pixel_grb << 8u);
 }
 
-void led_task() {
-  uint32_t t = to_ms_since_boot(get_absolute_time()) / 30;
-  if (t == time_of_last_pix_update) {
+void led_task(uint32_t time_ms) {
+  uint32_t frame = time_ms / 30;
+  if (frame == frame_of_last_pix_update) {
     return;
   }
-  time_of_last_pix_update = t;
+  frame_of_last_pix_update = frame;
   uint32_t color = 0;
   if (active_sw_mode == SW_MODE_SET) {
-    if (active_device_type == HID_ITF_PROTOCOL_KEYBOARD) {
+    if (active_device_type == HID_ITF_PROTOCOL_KEYBOARD || true) {  // TODO
       color = keyboard_fx[active_fx_slot]->get_indicator_color();
     } else {
       color = mouse_fx[active_fx_slot]->get_indicator_color();
     }
-  } else if(fx_enabled) {
+  } else if (fx_enabled) {
     if (active_device_type == HID_ITF_PROTOCOL_KEYBOARD) {
-      color = keyboard_fx[active_fx_slot]->get_current_pixel_value(t);
+      color = keyboard_fx[active_fx_slot]->get_current_pixel_value(time_ms);
     } else {
-      color = mouse_fx[active_fx_slot]->get_current_pixel_value(t);
+      color = mouse_fx[active_fx_slot]->get_current_pixel_value(time_ms);
     }
   }
   set_pixel(color);
 }
 
-void io_task() {
-  uint32_t t = to_ms_since_boot(get_absolute_time()) / 20;
-  if (t == time_of_last_io_update) {
+void io_task(uint32_t time_ms) {
+  uint32_t frame = time_ms / 20;
+  if (frame == frame_of_last_io_update) {
     return;
   }
-  time_of_last_io_update = t;
+  frame_of_last_io_update = frame;
   read_toggle_switch();
   read_foot_switch();
   read_pot();
+}
+
+void fx_task(uint32_t time_ms) {
+  mouse_fx[active_fx_slot]->tick(time_ms);
+  keyboard_fx[active_fx_slot]->tick(time_ms);
 }
 
 void core1_main() {
@@ -297,13 +304,16 @@ int main(void) {
   init_pix();
   init_io();
 
-  mouse_fx[active_fx_slot]->initialize();
-  keyboard_fx[active_fx_slot]->initialize();
+  uint32_t now = MS_SINCE_BOOT;
+  mouse_fx[active_fx_slot]->initialize(now);
+  keyboard_fx[active_fx_slot]->initialize(now);
 
   while (1) {
+    uint32_t time_ms = MS_SINCE_BOOT;
     tud_task();  // tinyusb device task
-    led_task();
-    io_task();
+    led_task(time_ms);
+    io_task(time_ms);
+    fx_task(time_ms);
   }
 
   return 0;
@@ -425,16 +435,15 @@ static inline bool find_key_in_report(hid_keyboard_report_t const* report,
 static void process_kbd_report(uint8_t dev_addr,
                                hid_keyboard_report_t const* report) {
   (void)dev_addr;
-  // TODO
-  tud_hid_keyboard_report(REPORT_ID_KEYBOARD, report->modifier,
-                          (uint8_t*)report->keycode);
+  uint8_t slot = fx_enabled ? active_fx_slot : MAX_FX;
+  keyboard_fx[slot]->process_keyboard_report(report);
 }
 
 // send mouse report to usb device CDC
 static void process_mouse_report(uint8_t dev_addr,
                                  hid_mouse_report_t const* report) {
   (void)dev_addr;
-  uint8_t slot = fx_enabled ? active_fx_slot : MAX_FX; 
+  uint8_t slot = fx_enabled ? active_fx_slot : MAX_FX;
   mouse_fx[slot]->process_mouse_report(report);
 }
 

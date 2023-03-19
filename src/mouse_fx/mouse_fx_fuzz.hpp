@@ -5,15 +5,17 @@ class MouseFuzz : public IMouseFx {
  public:
   MouseFuzz() {}
 
-  void initialize() { log_line("mouse fuzz init"); }
+  void initialize(uint32_t time_ms) { log_line("mouse fuzz init"); }
 
   uint32_t get_indicator_color() { return urgb_u32(200, 0, 0); }
 
-  uint32_t get_current_pixel_value(uint32_t frame) {
+  uint32_t get_current_pixel_value(uint32_t time_ms) {
     return get_indicator_color();
   }
 
   void update_parameter(float percentage) {}
+
+  void tick(uint32_t time_ms) {}
 
   void process_mouse_report(hid_mouse_report_t const *report) {
     int8_t pos_vals[] = {0,   -2, -17, 4,  20,  6,  35, 50,
