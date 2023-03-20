@@ -17,7 +17,7 @@ static inline uint32_t urgb_u32(uint8_t r, uint8_t g, uint8_t b) {
 
 class IFx {
  public:
-  virtual void initialize(uint32_t time_ms);
+  virtual void initialize(uint32_t time_ms, float param_percentage);
   virtual uint32_t get_indicator_color();
   virtual uint32_t get_current_pixel_value(uint32_t time_ms);
   virtual void update_parameter(float percentage);

@@ -5,7 +5,9 @@ class MouseFuzz : public IMouseFx {
  public:
   MouseFuzz() {}
 
-  void initialize(uint32_t time_ms) { log_line("mouse fuzz init"); }
+  void initialize(uint32_t time_ms, float param_percentage) {
+    log_line("mouse fuzz init");
+  }
 
   uint32_t get_indicator_color() { return urgb_u32(200, 0, 0); }
 

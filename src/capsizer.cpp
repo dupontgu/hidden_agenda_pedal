@@ -69,7 +69,7 @@
 #define SW_MODE_MOM 1
 #define SW_MODE_LATCH 2
 
-#define ADC_DEAD_ZONE 0.01f
+#define ADC_DEAD_ZONE 0.015f
 
 static struct {
   uint8_t report_count;
@@ -93,6 +93,7 @@ static bool fx_enabled = true;
 static uint8_t active_fx_slot = 0;
 static uint8_t active_sw_mode = SW_MODE_SET;
 static bool previous_foot_sw_value = 0;
+static bool use_increased_dead_zone = 0;
 static uint32_t frame_of_last_pix_update = 0;
 static uint32_t frame_of_last_io_update = 0;
 static float previous_adc_reading = -1.0f;
@@ -125,18 +126,25 @@ void on_fx_param_tweaked(float percentage) {
   keyboard_fx[active_fx_slot]->update_parameter(percentage);
 }
 
-void read_pot() {
+inline float read_pot() {
   // expand range so we'll def get 0 and 1 on the ends
   float adc = ((((float)adc_read() / 4096.0f) * 1.03f) - 0.015);
   // clamp to range 0..1
   adc = adc < 0.0f ? 0.0f : (adc > 1.0f ? 1.0f : adc);
+  return adc;
+}
+
+void update_from_pot() {
+  float adc = read_pot();
   float delta = previous_adc_reading - adc;
+  float dead_zone = use_increased_dead_zone ? ADC_DEAD_ZONE * 4 : ADC_DEAD_ZONE;
   // is there a less terrible way to write this? perhaps.
   if (!(adc == 1.0f && previous_adc_reading != 1.0f) &&
-      !(adc == 0.0f && previous_adc_reading != 0.0f) && delta < ADC_DEAD_ZONE &&
-      delta > -ADC_DEAD_ZONE) {
+      !(adc == 0.0f && previous_adc_reading != 0.0f) && delta < dead_zone &&
+      delta > -dead_zone) {
     return;
   }
+  use_increased_dead_zone = 0;
   previous_adc_reading = adc;
   if (active_sw_mode != SW_MODE_SET) {
     on_fx_param_tweaked(adc);
@@ -146,15 +154,14 @@ void read_pot() {
     if (slot != active_fx_slot) {
       log_line("fx slot: %u", slot);
       uint32_t time_ms = MS_SINCE_BOOT;
-      mouse_fx[slot]->initialize(time_ms);
-      keyboard_fx[slot]->initialize(time_ms);
+      mouse_fx[slot]->initialize(time_ms, adc);
+      keyboard_fx[slot]->initialize(time_ms, adc);
     }
     active_fx_slot = slot;
   }
 }
 
 void read_foot_switch() {
-  // TODO read gpio
   bool current_val = gpio_get(FOOT_SW_GPIO);
   if (current_val == previous_foot_sw_value) {
     return;
@@ -171,12 +178,14 @@ void read_foot_switch() {
 void read_toggle_switch() {
   uint8_t current_val = (gpio_get(TOGGLE_1_GPIO) ? 0 : 0b01) |
                         (gpio_get(TOGGLE_2_GPIO) ? 0 : 0b10);
-  // if we're switching modes, disable the fx
-  if (current_val != active_sw_mode) {
-    log_line("toggle switch: %u", current_val);
-    fx_enabled = false;
+  if (current_val == active_sw_mode) {
+    return;
   }
   active_sw_mode = current_val;
+  log_line("toggle switch: %u", current_val);
+  // if we're switching modes, disable the fx and make the knob less sensitive
+  fx_enabled = false;
+  use_increased_dead_zone = 1;
 }
 
 void reboot_to_uf2(uint gpio, uint32_t events) {
@@ -263,7 +272,7 @@ void io_task(uint32_t time_ms) {
   frame_of_last_io_update = frame;
   read_toggle_switch();
   read_foot_switch();
-  read_pot();
+  update_from_pot();
 }
 
 void fx_task(uint32_t time_ms) {
@@ -304,16 +313,17 @@ int main(void) {
   init_pix();
   init_io();
 
+  float param_value = read_pot();
   uint32_t now = MS_SINCE_BOOT;
-  mouse_fx[active_fx_slot]->initialize(now);
-  keyboard_fx[active_fx_slot]->initialize(now);
+  mouse_fx[active_fx_slot]->initialize(now, param_value);
+  keyboard_fx[active_fx_slot]->initialize(now, param_value);
 
   while (1) {
     uint32_t time_ms = MS_SINCE_BOOT;
-    tud_task();  // tinyusb device task
     led_task(time_ms);
     io_task(time_ms);
     fx_task(time_ms);
+    tud_task();  // tinyusb device task
   }
 
   return 0;
