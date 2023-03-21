@@ -255,7 +255,7 @@ void led_task(uint32_t time_ms) {
       color = mouse_fx[active_fx_slot]->get_indicator_color();
     }
   } else if (fx_enabled) {
-    if (active_device_type == HID_ITF_PROTOCOL_KEYBOARD) {
+    if (active_device_type == HID_ITF_PROTOCOL_KEYBOARD || true) {
       color = keyboard_fx[active_fx_slot]->get_current_pixel_value(time_ms);
     } else {
       color = mouse_fx[active_fx_slot]->get_current_pixel_value(time_ms);

@@ -19,12 +19,7 @@ class MousePassthrough : public IMouseFx {
   uint32_t get_indicator_color() { return indicator_color; }
 
   uint32_t get_current_pixel_value(uint32_t time_ms) {
-    uint8_t r = (uint8_t)((float)(uint8_t)(indicator_color >> 16) * brightness);
-    uint8_t g = (uint8_t)((float)(uint8_t)((indicator_color & 0xFF00) >> 8) *
-                          brightness);
-    uint8_t b =
-        (uint8_t)((float)(uint8_t)((indicator_color & 0x00FF)) * brightness);
-    return urgb_u32(r, g, b);
+    return color_at_brightness(indicator_color, brightness);
   }
 
   void update_parameter(float percentage) { brightness = percentage; }
