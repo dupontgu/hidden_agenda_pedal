@@ -238,6 +238,7 @@ void send_mouse_report(uint8_t buttons, int8_t x, int8_t y, int8_t wheel,
 
 void send_keyboard_report(uint8_t modifier, uint8_t reserved,
                           const uint8_t keycode[6]) {
+  (void)reserved;
   log_line("latest report %u %u %u %u %u %u", keycode[0], keycode[1],
            keycode[2], keycode[3], keycode[4], keycode[5]);
   tud_hid_keyboard_report(REPORT_ID_KEYBOARD, modifier, (uint8_t*)keycode);
@@ -441,15 +442,6 @@ void tuh_hid_umount_cb(uint8_t dev_addr, uint8_t instance) {
   log_line("[%u] HID Interface%u is unmounted", dev_addr, instance);
 }
 
-static inline bool find_key_in_report(hid_keyboard_report_t const* report,
-                                      uint8_t keycode) {
-  for (uint8_t i = 0; i < 6; i++) {
-    if (report->keycode[i] == keycode) return true;
-  }
-
-  return false;
-}
-
 static void process_kbd_report(uint8_t dev_addr,
                                hid_keyboard_report_t const* report,
                                uint32_t time_ms) {
@@ -469,6 +461,7 @@ static void process_mouse_report(uint8_t dev_addr,
 
 void tuh_hid_report_received_cb(uint8_t dev_addr, uint8_t instance,
                                 uint8_t const* report, uint16_t len) {
+  (void)len;
   uint8_t itf_protocol = HID_ITF_PROTOCOL_NONE;
   uint8_t const* report_offset = report;
 

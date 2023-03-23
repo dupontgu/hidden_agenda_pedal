@@ -7,22 +7,28 @@
 #define DUTY_CYCLE_MAX 0xFFFF
 
 class KeyboardTremolo : public IKeyboardFx {
+  uint32_t off_color = 0;
+  uint32_t indicator_color = 0;
+  uint16_t duty_cycle_ms = 0;
   bool sarcastic_mode = false;
   bool timer_engaged = false;
-  uint16_t duty_cycle_ms = 0;
-  uint32_t off_color = 0;
 
  public:
-  KeyboardTremolo() {}
+  KeyboardTremolo() {
+    indicator_color = urgb_u32(150, 0, 40);
+    off_color = color_at_brightness(get_indicator_color(), 0.3);
+  }
 
   void initialize(uint32_t time_ms, float param_percentage) {
+    (void)time_ms;
+    (void)param_percentage;
     log_line("keyboard trem init %u", 1);
-    off_color = color_at_brightness(get_indicator_color(), 0.3);
   }
 
   uint32_t get_indicator_color() { return urgb_u32(150, 0, 40); }
 
   uint32_t get_current_pixel_value(uint32_t time_ms) {
+    (void)time_ms;
     return timer_engaged ? get_indicator_color() : off_color;
   }
 
@@ -67,7 +73,9 @@ class KeyboardTremolo : public IKeyboardFx {
 
   void deinit() {}
 
-  void process_keyboard_report(hid_keyboard_report_t const *report, uint32_t time_ms) {
+  void process_keyboard_report(hid_keyboard_report_t const *report,
+                               uint32_t time_ms) {
+    (void)time_ms;
     uint8_t modifier_flag = 0;
     if (sarcastic_mode) {
       timer_engaged = (get_random_byte() & 0b01);

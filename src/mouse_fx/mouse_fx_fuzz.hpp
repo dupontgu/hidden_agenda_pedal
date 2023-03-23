@@ -2,26 +2,33 @@
 #include "tusb.h"
 
 class MouseFuzz : public IMouseFx {
+  uint32_t indicator_color;
+
  public:
-  MouseFuzz() {}
+  MouseFuzz() { indicator_color = urgb_u32(200, 0, 0); }
 
   void initialize(uint32_t time_ms, float param_percentage) {
+    (void)time_ms;
+    (void)param_percentage;
     log_line("mouse fuzz init");
   }
 
-  uint32_t get_indicator_color() { return urgb_u32(200, 0, 0); }
+  uint32_t get_indicator_color() { return indicator_color; }
 
   uint32_t get_current_pixel_value(uint32_t time_ms) {
-    return get_indicator_color();
+    (void)time_ms;
+    return indicator_color;
   }
 
-  void update_parameter(float percentage) {}
+  void update_parameter(float percentage) { (void)percentage; }
 
-  void tick(uint32_t time_ms) {}
+  void tick(uint32_t time_ms) { (void)time_ms; }
 
   void deinit() {}
 
-  void process_mouse_report(hid_mouse_report_t const *report, uint32_t time_ms) {
+  void process_mouse_report(hid_mouse_report_t const *report,
+                            uint32_t time_ms) {
+    (void)time_ms;
     int8_t pos_vals[] = {0,   -2, -17, 4,  20,  6,  35, 50,
                          -10, 1,  66,  11, -20, 22, 10, 120};
     int8_t neg_vals[] = {0,  2,  17,  -4,  -20, -6,  -35, -50,
