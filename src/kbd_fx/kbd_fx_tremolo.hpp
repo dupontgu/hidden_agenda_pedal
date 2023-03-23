@@ -65,7 +65,9 @@ class KeyboardTremolo : public IKeyboardFx {
     }
   }
 
-  void process_keyboard_report(hid_keyboard_report_t const *report) {
+  void deinit() {}
+
+  void process_keyboard_report(hid_keyboard_report_t const *report, uint32_t time_ms) {
     uint8_t modifier_flag = 0;
     if (sarcastic_mode) {
       timer_engaged = (get_random_byte() & 0b01);

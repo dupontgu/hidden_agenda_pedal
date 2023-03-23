@@ -31,6 +31,7 @@
 #include "bsp/board.h"
 #include "hardware/adc.h"
 #include "hardware/structs/rosc.h"
+#include "kbd_fx/kbd_fx_delay.hpp"
 #include "kbd_fx/kbd_fx_passthrough.hpp"
 #include "kbd_fx/kbd_fx_tremolo.hpp"
 #include "mouse_fx/mouse_fx_fuzz.hpp"
@@ -80,13 +81,14 @@ MouseFuzz mouse_fuzz;
 MousePassthrough mouse_passthrough(0x002F2F2F);
 KeyboardTremolo keyboard_tremolo;
 KeyboardPassthrough keyboard_passthrough;
+KeyboardDelay keyboard_delay;
 // LAST FX (at index MAX_FX) should always be passthrough! This is what gets run
 // when pedal is "off"
 static IMouseFx* mouse_fx[] = {&mouse_passthrough, &mouse_passthrough,
                                &mouse_passthrough, &mouse_passthrough,
                                &mouse_passthrough};
 static IKeyboardFx* keyboard_fx[] = {
-    &keyboard_passthrough, &keyboard_tremolo, &keyboard_passthrough,
+    &keyboard_delay, &keyboard_tremolo, &keyboard_passthrough,
     &keyboard_passthrough, &keyboard_passthrough};
 static uint8_t active_device_type = HID_ITF_PROTOCOL_KEYBOARD;
 static bool fx_enabled = true;
@@ -154,7 +156,9 @@ void update_from_pot() {
     if (slot != active_fx_slot) {
       log_line("fx slot: %u", slot);
       uint32_t time_ms = MS_SINCE_BOOT;
+      mouse_fx[active_fx_slot]->deinit();
       mouse_fx[slot]->initialize(time_ms, adc);
+      keyboard_fx[active_fx_slot]->deinit();
       keyboard_fx[slot]->initialize(time_ms, adc);
     }
     active_fx_slot = slot;
@@ -234,6 +238,8 @@ void send_mouse_report(uint8_t buttons, int8_t x, int8_t y, int8_t wheel,
 
 void send_keyboard_report(uint8_t modifier, uint8_t reserved,
                           const uint8_t keycode[6]) {
+  log_line("latest report %u %u %u %u %u %u", keycode[0], keycode[1],
+           keycode[2], keycode[3], keycode[4], keycode[5]);
   tud_hid_keyboard_report(REPORT_ID_KEYBOARD, modifier, (uint8_t*)keycode);
 }
 
@@ -276,8 +282,10 @@ void io_task(uint32_t time_ms) {
 }
 
 void fx_task(uint32_t time_ms) {
-  mouse_fx[active_fx_slot]->tick(time_ms);
-  keyboard_fx[active_fx_slot]->tick(time_ms);
+  if (fx_enabled) {
+    mouse_fx[active_fx_slot]->tick(time_ms);
+    keyboard_fx[active_fx_slot]->tick(time_ms);
+  }
 }
 
 void core1_main() {
@@ -443,18 +451,20 @@ static inline bool find_key_in_report(hid_keyboard_report_t const* report,
 }
 
 static void process_kbd_report(uint8_t dev_addr,
-                               hid_keyboard_report_t const* report) {
+                               hid_keyboard_report_t const* report,
+                               uint32_t time_ms) {
   (void)dev_addr;
   uint8_t slot = fx_enabled ? active_fx_slot : MAX_FX;
-  keyboard_fx[slot]->process_keyboard_report(report);
+  keyboard_fx[slot]->process_keyboard_report(report, time_ms);
 }
 
 // send mouse report to usb device CDC
 static void process_mouse_report(uint8_t dev_addr,
-                                 hid_mouse_report_t const* report) {
+                                 hid_mouse_report_t const* report,
+                                 uint32_t time_ms) {
   (void)dev_addr;
   uint8_t slot = fx_enabled ? active_fx_slot : MAX_FX;
-  mouse_fx[slot]->process_mouse_report(report);
+  mouse_fx[slot]->process_mouse_report(report, time_ms);
 }
 
 void tuh_hid_report_received_cb(uint8_t dev_addr, uint8_t instance,
@@ -488,13 +498,16 @@ void tuh_hid_report_received_cb(uint8_t dev_addr, uint8_t instance,
     itf_protocol = tuh_hid_interface_protocol(dev_addr, instance);
   }
 
+  uint32_t time_ms = MS_SINCE_BOOT;
   switch (itf_protocol) {
     case HID_ITF_PROTOCOL_KEYBOARD:
-      process_kbd_report(dev_addr, (hid_keyboard_report_t const*)report_offset);
+      process_kbd_report(dev_addr, (hid_keyboard_report_t const*)report_offset,
+                         time_ms);
       break;
 
     case HID_ITF_PROTOCOL_MOUSE:
-      process_mouse_report(dev_addr, (hid_mouse_report_t const*)report_offset);
+      process_mouse_report(dev_addr, (hid_mouse_report_t const*)report_offset,
+                           time_ms);
       break;
 
     default:

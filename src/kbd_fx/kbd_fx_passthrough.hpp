@@ -19,7 +19,9 @@ class KeyboardPassthrough : public IKeyboardFx {
 
   void tick(uint32_t time_ms) {}
 
-  void process_keyboard_report(hid_keyboard_report_t const *report) {
+  void deinit() {}
+
+  void process_keyboard_report(hid_keyboard_report_t const *report, uint32_t time_ms) {
     send_keyboard_report(report->modifier, report->reserved, report->keycode);
   }
 };

@@ -26,10 +26,11 @@ class MousePassthrough : public IMouseFx {
 
   void tick(uint32_t time_ms) {}
 
-  void process_mouse_report(hid_mouse_report_t const *report) {
+  void deinit() {}
+
+  void process_mouse_report(hid_mouse_report_t const *report, uint32_t time_ms) {
     log_line("mse btns: %u, x: %i, y: %i, whl: %i, pan: %i", report->buttons,
              report->x, report->y, report->wheel, report->pan);
-    // send_mouse_report(report->buttons, report->x, report->y, report->wheel,
-    // report->pan);
+    send_mouse_report(report->buttons, report->x, report->y, report->wheel, 0);
   }
 };

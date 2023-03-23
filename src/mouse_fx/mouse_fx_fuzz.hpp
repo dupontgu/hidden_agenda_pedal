@@ -19,7 +19,9 @@ class MouseFuzz : public IMouseFx {
 
   void tick(uint32_t time_ms) {}
 
-  void process_mouse_report(hid_mouse_report_t const *report) {
+  void deinit() {}
+
+  void process_mouse_report(hid_mouse_report_t const *report, uint32_t time_ms) {
     int8_t pos_vals[] = {0,   -2, -17, 4,  20,  6,  35, 50,
                          -10, 1,  66,  11, -20, 22, 10, 120};
     int8_t neg_vals[] = {0,  2,  17,  -4,  -20, -6,  -35, -50,
