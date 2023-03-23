@@ -8,6 +8,7 @@ class KeyboardHarmonizer : public IKeyboardFx {
   uint8_t pressed_keys[PRESSED_KEYS_COUNT] = {0};
   uint8_t report_code_buffer[REPORT_KEYCODE_COUNT] = {0};
   uint8_t harmony_offset = 1;
+  uint8_t harmonics = 0;
 
   int8_t index_of(uint8_t keycode, const uint8_t* array) {
     uint8_t n = sizeof(array);
@@ -39,11 +40,10 @@ class KeyboardHarmonizer : public IKeyboardFx {
   }
 
   void update_parameter(float percentage) {
-    harmony_offset = (uint8_t)(percentage * 100.0);
-    if (harmony_offset == 0) {
-      harmony_offset = 1;
-    }
-    log_line("harmony %u", harmony_offset);
+    uint8_t raw_percentage = (uint8_t)(percentage * 98.0);
+    harmony_offset = raw_percentage % 33;
+    harmonics = raw_percentage / 33;
+    log_line("harmony %u %u", harmony_offset, harmonics);
   }
 
   void tick(uint32_t time_ms) { (void)time_ms; }
@@ -73,11 +73,19 @@ class KeyboardHarmonizer : public IKeyboardFx {
     }
 
     size_t j = 0;
-    for (size_t i = 0; i < PRESSED_KEYS_COUNT; i++) {
+    for (size_t i = 0; i < PRESSED_KEYS_COUNT && j < REPORT_KEYCODE_COUNT;
+         i++) {
       uint8_t pressed_key = pressed_keys[i];
       if (pressed_key > 0) {
-        report_code_buffer[j++] = pressed_key;
-        report_code_buffer[j++] = pressed_key + harmony_offset;
+        if (harmonics == 0) {
+          report_code_buffer[j++] = pressed_key + harmony_offset;
+        } else {
+          report_code_buffer[j++] = pressed_key;
+          report_code_buffer[j++] = pressed_key + harmony_offset;
+          if (harmonics == 2) {
+            report_code_buffer[j++] = pressed_key + (harmony_offset * 2);
+          }
+        }
       }
     }
 
