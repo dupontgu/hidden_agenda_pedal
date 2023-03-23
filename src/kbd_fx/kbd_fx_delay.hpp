@@ -1,8 +1,6 @@
 #include "custom_hid.hpp"
 #include "tusb.h"
 
-// should absolutely always be 6, according to spec
-#define REPORT_KEYCODE_COUNT 6
 // this one we can change
 #define DELAY_SLOT_COUNT 6
 

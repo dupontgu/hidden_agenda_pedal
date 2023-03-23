@@ -1,5 +1,8 @@
 #include <stdlib.h>
 
+// should absolutely always be 6, according to spec
+#define REPORT_KEYCODE_COUNT 6
+
 void log_line(const char *format, ...);
 uint8_t get_random_byte();
 void send_mouse_report(uint8_t buttons, int8_t x, int8_t y, int8_t wheel,

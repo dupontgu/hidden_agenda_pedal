@@ -31,7 +31,9 @@
 #include "bsp/board.h"
 #include "hardware/adc.h"
 #include "hardware/structs/rosc.h"
+#include "hardware/watchdog.h"
 #include "kbd_fx/kbd_fx_delay.hpp"
+#include "kbd_fx/kbd_fx_harmonizer.hpp"
 #include "kbd_fx/kbd_fx_passthrough.hpp"
 #include "kbd_fx/kbd_fx_tremolo.hpp"
 #include "mouse_fx/mouse_fx_fuzz.hpp"
@@ -82,13 +84,14 @@ MousePassthrough mouse_passthrough(0x002F2F2F);
 KeyboardTremolo keyboard_tremolo;
 KeyboardPassthrough keyboard_passthrough;
 KeyboardDelay keyboard_delay;
+KeyboardHarmonizer keyboard_harmonizer;
 // LAST FX (at index MAX_FX) should always be passthrough! This is what gets run
 // when pedal is "off"
 static IMouseFx* mouse_fx[] = {&mouse_passthrough, &mouse_passthrough,
                                &mouse_passthrough, &mouse_passthrough,
                                &mouse_passthrough};
 static IKeyboardFx* keyboard_fx[] = {
-    &keyboard_delay, &keyboard_tremolo, &keyboard_passthrough,
+    &keyboard_delay, &keyboard_tremolo, &keyboard_harmonizer,
     &keyboard_passthrough, &keyboard_passthrough};
 static uint8_t active_device_type = HID_ITF_PROTOCOL_KEYBOARD;
 static bool fx_enabled = true;
@@ -313,12 +316,12 @@ int main(void) {
   // init device stack on configured roothub port
   set_sys_clock_khz(120000, true);
 
+  init_soft_boot();
   multicore_reset_core1();
   // all USB task run in core1
   multicore_launch_core1(core1_main);
 
   tud_init(BOARD_TUD_RHPORT);
-  init_soft_boot();
   init_pix();
   init_io();
 
@@ -326,6 +329,7 @@ int main(void) {
   uint32_t now = MS_SINCE_BOOT;
   mouse_fx[active_fx_slot]->initialize(now, param_value);
   keyboard_fx[active_fx_slot]->initialize(now, param_value);
+  watchdog_enable(200, 1);
 
   while (1) {
     uint32_t time_ms = MS_SINCE_BOOT;
@@ -333,6 +337,7 @@ int main(void) {
     io_task(time_ms);
     fx_task(time_ms);
     tud_task();  // tinyusb device task
+    watchdog_update();
   }
 
   return 0;
