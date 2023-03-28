@@ -22,7 +22,7 @@ class KeyboardTremolo : public IKeyboardFx {
   void initialize(uint32_t time_ms, float param_percentage) {
     (void)time_ms;
     (void)param_percentage;
-    log_line("keyboard trem init %u", 1);
+    log_line("k trm init %u", 1);
   }
 
   uint32_t get_indicator_color() { return urgb_u32(150, 0, 40); }

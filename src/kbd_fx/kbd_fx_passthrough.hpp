@@ -10,7 +10,7 @@ class KeyboardPassthrough : public IKeyboardFx {
   void initialize(uint32_t time_ms, float param_percentage) {
     (void)time_ms;
     (void)param_percentage;
-    log_line("keyboard passthrough init %u", 1);
+    log_line("k pass init");
   }
 
   uint32_t get_indicator_color() { return indicator_color; }

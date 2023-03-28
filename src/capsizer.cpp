@@ -74,6 +74,8 @@
 
 #define ADC_DEAD_ZONE 0.015f
 
+#define LOG_BUFFER_SIZE 2048
+
 static struct {
   uint8_t report_count;
   tuh_hid_report_info_t report_info[MAX_REPORT];
@@ -102,19 +104,38 @@ static bool use_increased_dead_zone = 0;
 static uint32_t frame_of_last_pix_update = 0;
 static uint32_t frame_of_last_io_update = 0;
 static float previous_adc_reading = -1.0f;
+static char log_buffer[LOG_BUFFER_SIZE];
+static size_t log_write_head = 0;
+static size_t log_read_head = 0;
 
 void log_line(const char* format, ...) {
-  char buffer[256];
+  if (log_write_head >= (LOG_BUFFER_SIZE - 255)) {
+    return;
+  }
   va_list args;
   va_start(args, format);
-  int count = vsnprintf(buffer, 253, format, args);
-  buffer[count] = '\r';
-  buffer[count + 1] = '\n';
-
-  tud_cdc_write(buffer, (uint32_t)count + 2);
-  tud_cdc_write_flush();
+  log_write_head += vsnprintf(log_buffer + log_write_head, 253, format, args);
+  log_buffer[log_write_head] = '\r';
+  log_buffer[log_write_head + 1] = '\n';
+  log_buffer[log_write_head + 2] = 0;
+  log_buffer[log_write_head + 3] = 0;
+  log_write_head += 3;
 
   va_end(args);
+}
+
+void flush_log() {
+  if (log_write_head) {
+    size_t len = strlen(log_buffer + log_read_head);
+    if (len > 0) {
+        tud_cdc_write(log_buffer + log_read_head, len);
+        tud_cdc_write_flush();
+        log_read_head += len + 1;
+    } else {
+      log_read_head = 0;
+      log_write_head = 0;
+    }
+  }
 }
 
 uint8_t get_random_byte() {
@@ -242,7 +263,7 @@ void send_mouse_report(uint8_t buttons, int8_t x, int8_t y, int8_t wheel,
 void send_keyboard_report(uint8_t modifier, uint8_t reserved,
                           const uint8_t keycode[6]) {
   (void)reserved;
-  log_line("latest report %u %u %u %u %u %u", keycode[0], keycode[1],
+  log_line("k report %u %u %u %u %u %u", keycode[0], keycode[1],
            keycode[2], keycode[3], keycode[4], keycode[5]);
   tud_hid_keyboard_report(REPORT_ID_KEYBOARD, modifier, (uint8_t*)keycode);
 }
@@ -336,6 +357,7 @@ int main(void) {
     led_task(time_ms);
     io_task(time_ms);
     fx_task(time_ms);
+    flush_log();
     tud_task();  // tinyusb device task
     watchdog_update();
   }
@@ -420,15 +442,15 @@ void tuh_hid_mount_cb(uint8_t dev_addr, uint8_t instance,
 
   hid_info[instance].report_count = tuh_hid_parse_report_descriptor(
       hid_info[instance].report_info, MAX_REPORT, desc_report, desc_len);
-  log_line("HID has %u reports", hid_info[instance].report_count);
+  log_line("%u reports", hid_info[instance].report_count);
   for (size_t i = 0; i < hid_info[instance].report_count; i++) {
     tuh_hid_report_info_t r = hid_info[instance].report_info[i];
-    log_line("report id: %u, report usage: %u", r.report_id, r.usage);
+    log_line("id: %u, usage: %u", r.report_id, r.usage);
   }
 
   uint16_t vid, pid;
   tuh_vid_pid_get(dev_addr, &vid, &pid);
-  log_line("[%04x:%04x][%u] HID Interface%u, Protocol = %s", vid, pid, dev_addr,
+  log_line("[%04x:%04x][%u] HID%u, proto=%s", vid, pid, dev_addr,
            instance, protocol_str[itf_protocol]);
 
   // Receive report from boot keyboard & mouse only
@@ -444,7 +466,7 @@ void tuh_hid_mount_cb(uint8_t dev_addr, uint8_t instance,
 
 // Invoked when device with hid interface is un-mounted
 void tuh_hid_umount_cb(uint8_t dev_addr, uint8_t instance) {
-  log_line("[%u] HID Interface%u is unmounted", dev_addr, instance);
+  log_line("[%u] HID%u unmounted", dev_addr, instance);
 }
 
 static void process_kbd_report(uint8_t dev_addr,

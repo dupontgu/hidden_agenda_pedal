@@ -10,7 +10,7 @@ class MouseFuzz : public IMouseFx {
   void initialize(uint32_t time_ms, float param_percentage) {
     (void)time_ms;
     (void)param_percentage;
-    log_line("mouse fuzz init");
+    log_line("m fuzz init");
   }
 
   uint32_t get_indicator_color() { return indicator_color; }

@@ -15,7 +15,7 @@ class MousePassthrough : public IMouseFx {
   void initialize(uint32_t time_ms, float param_percentage) {
     (void)time_ms;
     (void)param_percentage;
-    log_line("Mouse Passthrough init");
+    log_line("m pass init");
   }
 
   uint32_t get_indicator_color() { return indicator_color; }

@@ -28,7 +28,7 @@ class KeyboardHarmonizer : public IKeyboardFx {
   void initialize(uint32_t time_ms, float param_percentage) {
     (void)time_ms;
     (void)param_percentage;
-    log_line("keyboard harmonizer init %u", 1);
+    log_line("k harm init %u", 1);
     update_parameter(param_percentage);
   }
 
@@ -43,7 +43,7 @@ class KeyboardHarmonizer : public IKeyboardFx {
     uint8_t raw_percentage = (uint8_t)(percentage * 98.0);
     harmony_offset = raw_percentage % 33;
     harmonics = raw_percentage / 33;
-    log_line("harmony %u %u", harmony_offset, harmonics);
+    log_line("harm %u %u", harmony_offset, harmonics);
   }
 
   void tick(uint32_t time_ms) { (void)time_ms; }
