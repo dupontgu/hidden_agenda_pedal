@@ -74,7 +74,7 @@
 
 #define ADC_DEAD_ZONE 0.015f
 
-#define LOG_BUFFER_SIZE 2048
+#define LOG_BUFFER_SIZE 1024
 
 static struct {
   uint8_t report_count;
@@ -104,9 +104,13 @@ static bool use_increased_dead_zone = 0;
 static uint32_t frame_of_last_pix_update = 0;
 static uint32_t frame_of_last_io_update = 0;
 static float previous_adc_reading = -1.0f;
+
 static char log_buffer[LOG_BUFFER_SIZE];
 static size_t log_write_head = 0;
 static size_t log_read_head = 0;
+
+static char cdc_read_buffer[LOG_BUFFER_SIZE];
+static size_t cdc_read_head = 0;
 
 void log_line(const char* format, ...) {
   if (log_write_head >= (LOG_BUFFER_SIZE - 255)) {
@@ -128,13 +132,24 @@ void flush_log() {
   if (log_write_head) {
     size_t len = strlen(log_buffer + log_read_head);
     if (len > 0) {
-        tud_cdc_write(log_buffer + log_read_head, len);
-        tud_cdc_write_flush();
-        log_read_head += len + 1;
+      tud_cdc_write(log_buffer + log_read_head, len);
+      tud_cdc_write_flush();
+      log_read_head += len + 1;
     } else {
       log_read_head = 0;
       log_write_head = 0;
     }
+  }
+}
+
+void process_cdc_input() {
+  if (cdc_read_head) {
+    if (cdc_read_buffer[cdc_read_head - 1] == '\r') {
+      cdc_read_buffer[cdc_read_head] = 0;
+      log_line(cdc_read_buffer);
+      cdc_read_head = 0;
+    }
+    tud_cdc_read_flush();
   }
 }
 
@@ -263,8 +278,8 @@ void send_mouse_report(uint8_t buttons, int8_t x, int8_t y, int8_t wheel,
 void send_keyboard_report(uint8_t modifier, uint8_t reserved,
                           const uint8_t keycode[6]) {
   (void)reserved;
-  log_line("k report %u %u %u %u %u %u", keycode[0], keycode[1],
-           keycode[2], keycode[3], keycode[4], keycode[5]);
+  log_line("k report %u %u %u %u %u %u", keycode[0], keycode[1], keycode[2],
+           keycode[3], keycode[4], keycode[5]);
   tud_hid_keyboard_report(REPORT_ID_KEYBOARD, modifier, (uint8_t*)keycode);
 }
 
@@ -359,6 +374,7 @@ int main(void) {
     fx_task(time_ms);
     flush_log();
     tud_task();  // tinyusb device task
+    process_cdc_input();
     watchdog_update();
   }
 
@@ -450,8 +466,8 @@ void tuh_hid_mount_cb(uint8_t dev_addr, uint8_t instance,
 
   uint16_t vid, pid;
   tuh_vid_pid_get(dev_addr, &vid, &pid);
-  log_line("[%04x:%04x][%u] HID%u, proto=%s", vid, pid, dev_addr,
-           instance, protocol_str[itf_protocol]);
+  log_line("[%04x:%04x][%u] HID%u, proto=%s", vid, pid, dev_addr, instance,
+           protocol_str[itf_protocol]);
 
   // Receive report from boot keyboard & mouse only
   // tuh_hid_report_received_cb() will be invoked when report is available
@@ -537,5 +553,12 @@ void tuh_hid_report_received_cb(uint8_t dev_addr, uint8_t instance,
   // continue to request to receive report
   if (!tuh_hid_receive_report(dev_addr, instance)) {
     log_line("Error: cannot request report");
+  }
+}
+
+void tud_cdc_rx_cb(uint8_t itf) {
+  if (tud_cdc_available()) {
+    cdc_read_head += tud_cdc_read(cdc_read_buffer + cdc_read_head,
+                                  LOG_BUFFER_SIZE - cdc_read_head);
   }
 }

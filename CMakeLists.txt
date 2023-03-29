@@ -6,6 +6,7 @@ project(pio_usb)
 pico_sdk_init()
 
 # add pico-pio-usb library for examples
+# YOULL PROBABLY NEED TO CHANGE THIS
 set(PICO_PIO_USB_DIR "${CMAKE_CURRENT_LIST_DIR}/../Pico-PIO-USB")
 # the second argument to add_subdirectory is needed here because this isn't
 # a subdirectory, it's out of tree.
