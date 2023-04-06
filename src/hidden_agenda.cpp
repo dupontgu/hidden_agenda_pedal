@@ -298,13 +298,13 @@ void led_task(uint32_t time_ms) {
   frame_of_last_pix_update = frame;
   uint32_t color = 0;
   if (active_sw_mode == SW_MODE_SET) {
-    if (active_device_type == HID_ITF_PROTOCOL_KEYBOARD || true) {  // TODO
+    if (active_device_type == HID_ITF_PROTOCOL_KEYBOARD) {  // TODO
       color = keyboard_fx[active_fx_slot]->get_indicator_color();
     } else {
       color = mouse_fx[active_fx_slot]->get_indicator_color();
     }
   } else if (fx_enabled) {
-    if (active_device_type == HID_ITF_PROTOCOL_KEYBOARD || true) {
+    if (active_device_type == HID_ITF_PROTOCOL_KEYBOARD) {
       color = keyboard_fx[active_fx_slot]->get_current_pixel_value(time_ms);
     } else {
       color = mouse_fx[active_fx_slot]->get_current_pixel_value(time_ms);
@@ -492,6 +492,7 @@ static void process_kbd_report(uint8_t dev_addr,
                                hid_keyboard_report_t const* report,
                                uint32_t time_ms) {
   (void)dev_addr;
+  active_device_type = HID_ITF_PROTOCOL_KEYBOARD;
   uint8_t slot = fx_enabled ? active_fx_slot : MAX_FX;
   keyboard_fx[slot]->process_keyboard_report(report, time_ms);
 }
@@ -501,6 +502,7 @@ static void process_mouse_report(uint8_t dev_addr,
                                  hid_mouse_report_t const* report,
                                  uint32_t time_ms) {
   (void)dev_addr;
+  active_device_type = HID_ITF_PROTOCOL_MOUSE;
   uint8_t slot = fx_enabled ? active_fx_slot : MAX_FX;
   mouse_fx[slot]->process_mouse_report(report, time_ms);
 }

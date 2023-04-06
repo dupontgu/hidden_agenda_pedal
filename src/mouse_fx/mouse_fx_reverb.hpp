@@ -21,7 +21,6 @@ class MouseReverb : public IMouseFx {
   int8_t y_buf[REVERB_BUF_SIZE] = {0};
   size_t buf_index = 0;
   uint32_t indicator_color;
-  float brightness;
 
   void add_sample(int8_t x, int8_t y) {
     if (++buf_index == REVERB_BUF_SIZE) {
@@ -49,7 +48,6 @@ class MouseReverb : public IMouseFx {
  public:
   MouseReverb(uint32_t color) {
     indicator_color = color;
-    brightness = 0.0f;
   }
 
   void initialize(uint32_t time_ms, float param_percentage) {
@@ -62,6 +60,7 @@ class MouseReverb : public IMouseFx {
 
   uint32_t get_current_pixel_value(uint32_t time_ms) {
     (void)time_ms;
+    float brightness = (current_velocity * 0.7f) + 0.1f;
     return color_at_brightness(indicator_color, brightness);
   }
 
@@ -84,13 +83,14 @@ class MouseReverb : public IMouseFx {
     current_velocity = current_velocity * velocity_scalar;
     int8_t x = (int8_t)(buf_average(x_buf) * current_velocity);
     int8_t y = (int8_t)(buf_average(y_buf) * current_velocity);
-    send_mouse_report(last_buttons, x, y, 0, 0);
+    
     // no reason to keep going, clear the buffer
     if (x == 0 && y == 0) {
       for (size_t i = 0; i < REVERB_BUF_SIZE; i++){
         add_sample(0, 0);
       }
-      current_velocity = 0.0;
+    } else {
+      send_mouse_report(last_buttons, x, y, 0, 0);
     }
   }
 
