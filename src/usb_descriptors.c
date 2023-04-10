@@ -33,8 +33,7 @@
  *   [MSB]         HID | MSC | CDC          [LSB]
  */
 #define _PID_MAP(itf, n)  ( (CFG_TUD_##itf) << (n) )
-#define USB_PID           (0x4000 | _PID_MAP(CDC, 0) | _PID_MAP(MSC, 1) | _PID_MAP(HID, 2) | \
-                           _PID_MAP(MIDI, 3) | _PID_MAP(VENDOR, 4) )
+#define USB_PID           0x1236
 
 #define USB_VID   0xCafe
 #define USB_BCD   0x0200
@@ -99,14 +98,15 @@ enum
 {
   ITF_NUM_HID,
   ITF_NUM_CDC,
+  ITF_NUM_CDC_DATA,
   ITF_NUM_TOTAL
 };
 
 #define  CONFIG_TOTAL_LEN  (TUD_CONFIG_DESC_LEN + TUD_HID_DESC_LEN + TUD_CDC_DESC_LEN)
 
 #define EPNUM_HID   0x81
-#define EPNUM_CDC_OUT     0x02
-#define EPNUM_CDC_IN      0x82
+#define EPNUM_CDC_OUT     0x04
+#define EPNUM_CDC_IN      0x84
 #define EPNUM_CDC_NOTIF   0x83
 
 uint8_t const desc_configuration[] =
@@ -189,6 +189,8 @@ char const* string_desc_arr [] =
   "TinyUSB",                     // 1: Manufacturer
   "TinyUSB Device",              // 2: Product
   "123456",                      // 3: Serials, should use chip ID
+  "TinyUSB HID",
+  "TinyUSB CDC"
 };
 
 static uint16_t _desc_str[32];
