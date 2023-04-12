@@ -101,11 +101,7 @@ static uint8_t active_device_type = HID_ITF_PROTOCOL_KEYBOARD;
 static bool fx_enabled = false;
 static uint8_t active_fx_slot = 0;
 static uint8_t active_sw_mode = SW_MODE_SET;
-static bool previous_foot_sw_value = 0;
 static bool use_increased_dead_zone = 0;
-static uint32_t frame_of_last_pix_update = 0;
-static uint32_t frame_of_last_io_update = 0;
-static float previous_adc_reading = -1.0f;
 
 static char log_buffer[LOG_BUFFER_SIZE];
 static size_t log_write_head = 0;
@@ -180,6 +176,7 @@ inline float read_pot() {
 }
 
 void update_from_pot() {
+  static float previous_adc_reading = -1.0f;
   float adc = read_pot();
   float delta = previous_adc_reading - adc;
   float dead_zone = use_increased_dead_zone ? ADC_DEAD_ZONE * 4 : ADC_DEAD_ZONE;
@@ -209,6 +206,7 @@ void update_from_pot() {
 }
 
 void read_foot_switch() {
+  static bool previous_foot_sw_value = 0;
   bool current_val = gpio_get(FOOT_SW_GPIO);
   if (current_val == previous_foot_sw_value) {
     return;
@@ -293,6 +291,7 @@ static inline void set_pixel(uint32_t pixel_grb) {
 }
 
 void led_task(uint32_t time_ms) {
+  static uint32_t frame_of_last_pix_update = 0;
   uint32_t frame = time_ms / 30;
   if (frame == frame_of_last_pix_update) {
     return;
@@ -316,6 +315,7 @@ void led_task(uint32_t time_ms) {
 }
 
 void io_task(uint32_t time_ms) {
+  static uint32_t frame_of_last_io_update = 0;
   uint32_t frame = time_ms / 20;
   if (frame == frame_of_last_io_update) {
     return;
