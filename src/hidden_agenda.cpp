@@ -98,7 +98,7 @@ static IKeyboardFx* keyboard_fx[] = {
     &keyboard_delay, &keyboard_tremolo, &keyboard_harmonizer,
     &keyboard_passthrough, &keyboard_passthrough};
 static uint8_t active_device_type = HID_ITF_PROTOCOL_KEYBOARD;
-static bool fx_enabled = true;
+static bool fx_enabled = false;
 static uint8_t active_fx_slot = 0;
 static uint8_t active_sw_mode = SW_MODE_SET;
 static bool previous_foot_sw_value = 0;
@@ -115,6 +115,7 @@ static char cdc_read_buffer[LOG_BUFFER_SIZE];
 static size_t cdc_read_head = 0;
 
 void log_line(const char* format, ...) {
+  // shouldn't happen, but throw it away to be safe
   if (log_write_head >= (LOG_BUFFER_SIZE - 255)) {
     return;
   }
@@ -147,7 +148,8 @@ void flush_log() {
 void process_cdc_input() {
   if (cdc_read_head) {
     if (cdc_read_buffer[cdc_read_head - 1] == '\r') {
-      cdc_read_buffer[cdc_read_head] = 0;
+      cdc_read_buffer[cdc_read_head - 1] = 0;
+      // TODO - actually process the line rather than log it
       log_line(cdc_read_buffer);
       cdc_read_head = 0;
     }
@@ -350,8 +352,6 @@ void core1_main() {
 
 /*------------- MAIN -------------*/
 int main(void) {
-  // board_init();
-
   // init device stack on configured roothub port
   set_sys_clock_khz(120000, true);
 

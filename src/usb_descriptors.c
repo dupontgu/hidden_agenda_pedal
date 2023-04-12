@@ -25,6 +25,7 @@
 
 #include "tusb.h"
 #include "usb_descriptors.h"
+#include "serial_num.h"
 
 /* A combination of interfaces must have a unique product id, since PC will save device driver after the first plug.
  * Same VID/PID with different interface e.g MSC (first), then CDC (later) will possibly cause system error on PC.
@@ -33,9 +34,10 @@
  *   [MSB]         HID | MSC | CDC          [LSB]
  */
 #define _PID_MAP(itf, n)  ( (CFG_TUD_##itf) << (n) )
-#define USB_PID           0x1236
 
-#define USB_VID   0xCafe
+// https://github.com/obdev/v-usb/blob/master/usbdrv/USB-IDs-for-free.txt
+#define USB_PID   0x05e1
+#define USB_VID   0x16c0
 #define USB_BCD   0x0200
 
 //--------------------------------------------------------------------+
@@ -186,11 +188,11 @@ uint8_t const * tud_descriptor_configuration_cb(uint8_t index)
 char const* string_desc_arr [] =
 {
   (const char[]) { 0x09, 0x04 }, // 0: is supported language is English (0x0409)
-  "TinyUSB",                     // 1: Manufacturer
-  "TinyUSB Device",              // 2: Product
-  "123456",                      // 3: Serials, should use chip ID
-  "TinyUSB HID",
-  "TinyUSB CDC"
+  "gvy.dvpont@gmail.com",                     // 1: Manufacturer
+  "Hidden Agenda",              // 2: Product
+  "SERIAL-PLACEHOLDER",                      // 3: Serials, should use chip ID
+  "HA-HID",
+  "HA-CDC"
 };
 
 static uint16_t _desc_str[32];
@@ -214,7 +216,7 @@ uint16_t const* tud_descriptor_string_cb(uint8_t index, uint16_t langid)
 
     if ( !(index < sizeof(string_desc_arr)/sizeof(string_desc_arr[0])) ) return NULL;
 
-    const char* str = string_desc_arr[index];
+    const char* str = index == 3 ? get_serial_number() : string_desc_arr[index];
 
     // Cap at max char
     chr_count = (uint8_t) strlen(str);
