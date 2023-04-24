@@ -3,22 +3,16 @@
 
 class MousePassthrough : public IMouseFx {
  private:
-  uint32_t indicator_color;
   float brightness;
 
  public:
-  MousePassthrough(uint32_t color) {
-    indicator_color = color;
-    brightness = 0.0f;
-  }
+  MousePassthrough() {}
 
   void initialize(uint32_t time_ms, float param_percentage) {
     (void)time_ms;
     (void)param_percentage;
     log_line("m pass init");
   }
-
-  uint32_t get_indicator_color() { return indicator_color; }
 
   uint32_t get_current_pixel_value(uint32_t time_ms) {
     (void)time_ms;

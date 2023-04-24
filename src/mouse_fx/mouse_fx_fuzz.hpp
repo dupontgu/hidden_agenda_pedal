@@ -2,18 +2,14 @@
 #include "tusb.h"
 
 class MouseFuzz : public IMouseFx {
-  uint32_t indicator_color;
-
  public:
-  MouseFuzz() { indicator_color = urgb_u32(200, 0, 0); }
+  MouseFuzz() {}
 
   void initialize(uint32_t time_ms, float param_percentage) {
     (void)time_ms;
     (void)param_percentage;
     log_line("m fuzz init");
   }
-
-  uint32_t get_indicator_color() { return indicator_color; }
 
   uint32_t get_current_pixel_value(uint32_t time_ms) {
     (void)time_ms;

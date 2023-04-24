@@ -30,7 +30,6 @@
 
 #include "bsp/board.h"
 #include "hardware/adc.h"
-#include "hardware/structs/rosc.h"
 #include "hardware/watchdog.h"
 #include "kbd_fx/kbd_fx_delay.hpp"
 #include "kbd_fx/kbd_fx_harmonizer.hpp"
@@ -39,6 +38,7 @@
 #include "mouse_fx/mouse_fx_fuzz.hpp"
 #include "mouse_fx/mouse_fx_passthrough.hpp"
 #include "mouse_fx/mouse_fx_reverb.hpp"
+#include "persistence.h"
 #include "pico/bootrom.h"
 #include "pico/multicore.h"
 #include "pico/stdlib.h"
@@ -46,13 +46,13 @@
 #include "pio_usb.h"
 #include "tusb.h"
 #include "usb_descriptors.h"
+#include "util.h"
 #include "ws2812.pio.h"
 
 #define GENERIC_DESKTOP_USAGE_PAGE 0x01
 #define USAGE_MOUSE 0x02
 #define USAGE_KEYBOARD 0x06
 
-#define RANDOM_BIT (rosc_hw->randombit ? 1 : 0)
 #define MS_SINCE_BOOT to_ms_since_boot(get_absolute_time())
 // TODO update this
 #define SOFT_BOOT_BTN_GPIO 0
@@ -83,8 +83,8 @@ static struct {
 } hid_info[CFG_TUH_HID];
 
 MouseFuzz mouse_fuzz;
-MousePassthrough mouse_passthrough(0x002F2F2F);
-MouseReverb mouse_reverb(0x002FFF2F);
+MousePassthrough mouse_passthrough;
+MouseReverb mouse_reverb;
 KeyboardTremolo keyboard_tremolo;
 KeyboardPassthrough keyboard_passthrough;
 KeyboardDelay keyboard_delay;
@@ -99,7 +99,7 @@ static IKeyboardFx* keyboard_fx[] = {
     &keyboard_passthrough, &keyboard_passthrough};
 static uint8_t active_device_type = HID_ITF_PROTOCOL_KEYBOARD;
 static bool fx_enabled = false;
-static uint8_t active_fx_slot = 0;
+static settings_t settings;
 static uint8_t active_sw_mode = SW_MODE_SET;
 static bool use_increased_dead_zone = 0;
 
@@ -153,18 +153,9 @@ void process_cdc_input() {
   }
 }
 
-uint8_t get_random_byte() {
-  uint8_t x = 0;
-  for (size_t i = 0; i < 8; i++) {
-    x |= RANDOM_BIT << i;
-  }
-
-  return x;
-}
-
 void on_fx_param_tweaked(float percentage) {
-  mouse_fx[active_fx_slot]->update_parameter(percentage);
-  keyboard_fx[active_fx_slot]->update_parameter(percentage);
+  mouse_fx[settings.active_fx_slot]->update_parameter(percentage);
+  keyboard_fx[settings.active_fx_slot]->update_parameter(percentage);
 }
 
 inline float read_pot() {
@@ -193,6 +184,7 @@ void update_from_pot() {
   } else {
     uint8_t slot = adc * MAX_FX;
     if (slot == MAX_FX) slot--;
+    uint8_t active_fx_slot = settings.active_fx_slot;
     if (slot != active_fx_slot) {
       log_line("fx slot: %u", slot);
       uint32_t time_ms = MS_SINCE_BOOT;
@@ -201,7 +193,7 @@ void update_from_pot() {
       keyboard_fx[active_fx_slot]->deinit();
       keyboard_fx[slot]->initialize(time_ms, adc);
     }
-    active_fx_slot = slot;
+    settings.active_fx_slot = slot;
   }
 }
 
@@ -298,8 +290,12 @@ void led_task(uint32_t time_ms) {
   }
   frame_of_last_pix_update = frame;
   uint32_t color = 0;
+  uint8_t active_fx_slot = settings.active_fx_slot;
   if (active_sw_mode == SW_MODE_SET) {
-    if (active_device_type == HID_ITF_PROTOCOL_KEYBOARD) {  // TODO
+    // blink
+    if (frame % 20 > 10) {
+      color = 0;
+    } else if (active_device_type == HID_ITF_PROTOCOL_KEYBOARD) {
       color = keyboard_fx[active_fx_slot]->get_indicator_color();
     } else {
       color = mouse_fx[active_fx_slot]->get_indicator_color();
@@ -328,8 +324,18 @@ void io_task(uint32_t time_ms) {
 
 void fx_task(uint32_t time_ms) {
   if (fx_enabled) {
-    mouse_fx[active_fx_slot]->tick(time_ms);
-    keyboard_fx[active_fx_slot]->tick(time_ms);
+    mouse_fx[settings.active_fx_slot]->tick(time_ms);
+    keyboard_fx[settings.active_fx_slot]->tick(time_ms);
+  }
+}
+
+void init_settings() {
+  init_persistence();
+  settings = read_settings_from_persistence();
+  for (size_t i = 0; i < MAX_FX; i++) {
+    uint32_t color = settings.slot_colors[i];
+    mouse_fx[i]->set_indicator_color(color);
+    keyboard_fx[i]->set_indicator_color(color);
   }
 }
 
@@ -356,6 +362,7 @@ int main(void) {
   set_sys_clock_khz(120000, true);
 
   init_soft_boot();
+  watchdog_enable(300, 1);
   multicore_reset_core1();
   // all USB task run in core1
   multicore_launch_core1(core1_main);
@@ -363,12 +370,12 @@ int main(void) {
   tud_init(BOARD_TUD_RHPORT);
   init_pix();
   init_io();
+  init_settings();
 
   float param_value = read_pot();
   uint32_t now = MS_SINCE_BOOT;
-  mouse_fx[active_fx_slot]->initialize(now, param_value);
-  keyboard_fx[active_fx_slot]->initialize(now, param_value);
-  watchdog_enable(200, 1);
+  mouse_fx[settings.active_fx_slot]->initialize(now, param_value);
+  keyboard_fx[settings.active_fx_slot]->initialize(now, param_value);
 
   while (1) {
     uint32_t time_ms = MS_SINCE_BOOT;
@@ -382,66 +389,6 @@ int main(void) {
   }
 
   return 0;
-}
-
-//--------------------------------------------------------------------+
-// Device callbacks
-//--------------------------------------------------------------------+
-
-// Invoked when device is mounted
-void tud_mount_cb(void) {}
-
-// Invoked when device is unmounted
-void tud_umount_cb(void) {}
-
-// Invoked when usb bus is suspended
-// remote_wakeup_en : if host allow us  to perform remote wakeup
-// Within 7ms, device must draw an average of current less than 2.5 mA from bus
-void tud_suspend_cb(bool remote_wakeup_en) { (void)remote_wakeup_en; }
-
-// Invoked when usb bus is resumed
-void tud_resume_cb(void) {}
-
-//--------------------------------------------------------------------+
-// USB HID
-//--------------------------------------------------------------------+
-
-// Invoked when sent REPORT successfully to host
-// Application can use this to send the next report
-// Note: For composite reports, report[0] is report ID
-void tud_hid_report_complete_cb(uint8_t instance, uint8_t const* report,
-                                uint16_t len) {
-  (void)report;
-  (void)instance;
-  (void)len;
-}
-
-// Invoked when received GET_REPORT control request
-// Application must fill buffer report's content and return its length.
-// Return zero will cause the stack to STALL request
-uint16_t tud_hid_get_report_cb(uint8_t instance, uint8_t report_id,
-                               hid_report_type_t report_type, uint8_t* buffer,
-                               uint16_t reqlen) {
-  // TODO not Implemented
-  (void)instance;
-  (void)report_id;
-  (void)report_type;
-  (void)buffer;
-  (void)reqlen;
-
-  return 0;
-}
-
-// Invoked when received SET_REPORT control request or
-// received data on OUT endpoint ( Report ID = 0, Type = 0 )
-void tud_hid_set_report_cb(uint8_t instance, uint8_t report_id,
-                           hid_report_type_t report_type, uint8_t const* buffer,
-                           uint16_t bufsize) {
-  (void)instance;
-  (void)report_id;
-  (void)report_type;
-  (void)buffer;
-  (void)bufsize;
 }
 
 //--------------------------------------------------------------------+
@@ -493,7 +440,7 @@ static void process_kbd_report(uint8_t dev_addr,
                                uint32_t time_ms) {
   (void)dev_addr;
   active_device_type = HID_ITF_PROTOCOL_KEYBOARD;
-  uint8_t slot = fx_enabled ? active_fx_slot : MAX_FX;
+  uint8_t slot = fx_enabled ? settings.active_fx_slot : MAX_FX;
   keyboard_fx[slot]->process_keyboard_report(report, time_ms);
 }
 
@@ -503,7 +450,7 @@ static void process_mouse_report(uint8_t dev_addr,
                                  uint32_t time_ms) {
   (void)dev_addr;
   active_device_type = HID_ITF_PROTOCOL_MOUSE;
-  uint8_t slot = fx_enabled ? active_fx_slot : MAX_FX;
+  uint8_t slot = fx_enabled ? settings.active_fx_slot : MAX_FX;
   mouse_fx[slot]->process_mouse_report(report, time_ms);
 }
 

@@ -27,21 +27,29 @@ class IFx {
  public:
   virtual void initialize(uint32_t time_ms, float param_percentage);
   virtual void deinit();
-  virtual uint32_t get_indicator_color();
   virtual uint32_t get_current_pixel_value(uint32_t time_ms);
   virtual void update_parameter(float percentage);
   virtual void tick(uint32_t time_ms);
+
+  uint32_t get_indicator_color() { return indicator_color; }
+
+  void set_indicator_color(uint32_t c) { indicator_color = c; }
+
+ protected:
+  uint32_t indicator_color = 0xFF666666;
 };
 
 class IMouseFx : public IFx {
  public:
-  virtual void process_mouse_report(hid_mouse_report_t const *report, uint32_t time_ms) = 0;
+  virtual void process_mouse_report(hid_mouse_report_t const *report,
+                                    uint32_t time_ms) = 0;
   virtual ~IMouseFx() {}
 };
 
 class IKeyboardFx : public IFx {
  public:
-  virtual void process_keyboard_report(hid_keyboard_report_t const *report, uint32_t time_ms) = 0;
+  virtual void process_keyboard_report(hid_keyboard_report_t const *report,
+                                       uint32_t time_ms) = 0;
   virtual ~IKeyboardFx() {}
 };
 #endif

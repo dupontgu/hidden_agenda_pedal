@@ -73,8 +73,6 @@ class KeyboardDelay : public IKeyboardFx {
     }
   }
 
-  uint32_t get_indicator_color() { return urgb_u32(0, 50, 50); }
-
   uint32_t get_current_pixel_value(uint32_t time_ms) {
     float delta = (float)(time_ms - pixel_last_update) / (float)delay_ms;
     pixel_last_update = time_ms;
@@ -83,7 +81,7 @@ class KeyboardDelay : public IKeyboardFx {
       pixel_cycle_progress = 0.0;
     }
     float adj_brightness = pixel_cycle_progress * pixel_cycle_progress * 0.5;
-    return color_at_brightness(get_indicator_color(), adj_brightness);
+    return color_at_brightness(indicator_color, adj_brightness);
   }
 
   void update_parameter(float percentage) { update_from_param(percentage); }

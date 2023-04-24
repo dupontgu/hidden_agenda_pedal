@@ -2,18 +2,14 @@
 #include "tusb.h"
 
 class KeyboardPassthrough : public IKeyboardFx {
-  uint32_t indicator_color;
-
  public:
-  KeyboardPassthrough() { indicator_color = urgb_u32(0, 200, 0); }
+  KeyboardPassthrough() {}
 
   void initialize(uint32_t time_ms, float param_percentage) {
     (void)time_ms;
     (void)param_percentage;
     log_line("k pass init");
   }
-
-  uint32_t get_indicator_color() { return indicator_color; }
 
   uint32_t get_current_pixel_value(uint32_t time_ms) {
     (void)time_ms;

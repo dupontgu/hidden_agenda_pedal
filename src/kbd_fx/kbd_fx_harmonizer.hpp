@@ -4,7 +4,6 @@
 #define PRESSED_KEYS_COUNT REPORT_KEYCODE_COUNT / 2
 
 class KeyboardHarmonizer : public IKeyboardFx {
-  uint32_t indicator_color;
   uint8_t pressed_keys[PRESSED_KEYS_COUNT] = {0};
   uint8_t report_code_buffer[REPORT_KEYCODE_COUNT] = {0};
   uint8_t harmony_offset = 1;
@@ -23,7 +22,7 @@ class KeyboardHarmonizer : public IKeyboardFx {
   inline int8_t free_slot_index() { return index_of(0, pressed_keys); }
 
  public:
-  KeyboardHarmonizer() { indicator_color = urgb_u32(30, 30, 80); }
+  KeyboardHarmonizer() {}
 
   void initialize(uint32_t time_ms, float param_percentage) {
     (void)time_ms;
@@ -31,8 +30,6 @@ class KeyboardHarmonizer : public IKeyboardFx {
     log_line("k harm init %u", 1);
     update_parameter(param_percentage);
   }
-
-  uint32_t get_indicator_color() { return indicator_color; }
 
   uint32_t get_current_pixel_value(uint32_t time_ms) {
     (void)time_ms;

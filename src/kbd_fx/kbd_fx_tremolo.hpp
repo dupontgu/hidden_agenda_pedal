@@ -8,15 +8,16 @@
 
 class KeyboardTremolo : public IKeyboardFx {
   uint32_t off_color = 0;
-  uint32_t indicator_color = 0;
   uint16_t duty_cycle_ms = 0;
   bool sarcastic_mode = false;
   bool timer_engaged = false;
 
  public:
-  KeyboardTremolo() {
-    indicator_color = urgb_u32(150, 0, 40);
-    off_color = color_at_brightness(get_indicator_color(), 0.3);
+  KeyboardTremolo() {}
+
+  void set_indicator_color(uint32_t c) {
+    IKeyboardFx::set_indicator_color(c);
+    off_color = color_at_brightness(indicator_color, 0.3);
   }
 
   void initialize(uint32_t time_ms, float param_percentage) {
@@ -25,11 +26,9 @@ class KeyboardTremolo : public IKeyboardFx {
     log_line("k trm init %u", 1);
   }
 
-  uint32_t get_indicator_color() { return urgb_u32(150, 0, 40); }
-
   uint32_t get_current_pixel_value(uint32_t time_ms) {
     (void)time_ms;
-    return timer_engaged ? get_indicator_color() : off_color;
+    return timer_engaged ? indicator_color : off_color;
   }
 
   void update_parameter(float percentage) {

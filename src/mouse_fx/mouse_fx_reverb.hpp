@@ -20,7 +20,6 @@ class MouseReverb : public IMouseFx {
   int8_t x_buf[REVERB_BUF_SIZE] = {0};
   int8_t y_buf[REVERB_BUF_SIZE] = {0};
   size_t buf_index = 0;
-  uint32_t indicator_color;
 
   void add_sample(int8_t x, int8_t y) {
     if (++buf_index == REVERB_BUF_SIZE) {
@@ -46,17 +45,13 @@ class MouseReverb : public IMouseFx {
   }
 
  public:
-  MouseReverb(uint32_t color) {
-    indicator_color = color;
-  }
+  MouseReverb() {}
 
   void initialize(uint32_t time_ms, float param_percentage) {
     (void)time_ms;
     update_parameter(param_percentage);
     log_line("m vrb init");
   }
-
-  uint32_t get_indicator_color() { return indicator_color; }
 
   uint32_t get_current_pixel_value(uint32_t time_ms) {
     (void)time_ms;
