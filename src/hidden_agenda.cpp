@@ -38,6 +38,7 @@
 #include "mouse_fx/mouse_fx_fuzz.hpp"
 #include "mouse_fx/mouse_fx_passthrough.hpp"
 #include "mouse_fx/mouse_fx_reverb.hpp"
+#include "mouse_fx/mouse_fx_xover.hpp"
 #include "persistence.h"
 #include "pico/bootrom.h"
 #include "pico/multicore.h"
@@ -85,14 +86,15 @@ static struct {
 MouseFuzz mouse_fuzz;
 MousePassthrough mouse_passthrough;
 MouseReverb mouse_reverb;
+MouseXOver mouse_xover;
 KeyboardTremolo keyboard_tremolo;
 KeyboardPassthrough keyboard_passthrough;
 KeyboardDelay keyboard_delay;
 KeyboardHarmonizer keyboard_harmonizer;
 // LAST FX (at index MAX_FX) should always be passthrough! This is what gets run
 // when pedal is "off"
-static IMouseFx* mouse_fx[] = {&mouse_reverb, &mouse_passthrough,
-                               &mouse_passthrough, &mouse_passthrough,
+static IMouseFx* mouse_fx[] = {&mouse_xover, &mouse_reverb,
+                               &mouse_fuzz, &mouse_passthrough,
                                &mouse_passthrough};
 static IKeyboardFx* keyboard_fx[] = {
     &keyboard_delay, &keyboard_tremolo, &keyboard_harmonizer,

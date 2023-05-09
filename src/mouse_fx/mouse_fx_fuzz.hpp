@@ -1,7 +1,46 @@
 #include "custom_hid.hpp"
 #include "tusb.h"
 
+#define FILTER_BUF_SIZE 50
+
 class MouseFuzz : public IMouseFx {
+ private:
+  typedef struct sample {
+    int8_t x;
+    int8_t y;
+  } sample_t;
+
+  uint32_t last_mouse_report_time = 0;
+  // hold last FILTER_BUF_SIZE x + y samples for simple low pass filter
+  sample_t filter_buf[FILTER_BUF_SIZE];
+  size_t filter_index = 0;
+  // whether to add or remove "noise" (this is effectively [heh] two fx in one)
+  bool add_noise;
+  float noise_param;
+  float filter_param;
+
+  inline void add_filter_sample(int8_t x, int8_t y) {
+    filter_buf[filter_index] = {x, y};
+    if (++filter_index >= FILTER_BUF_SIZE) {
+      filter_index = 0;
+    }
+  }
+
+  inline sample_t get_filtered_samples() {
+    size_t count = (size_t)(filter_param * (float)FILTER_BUF_SIZE);
+    if (count < 1) count = 1;
+    int16_t sum_x = 0, sum_y = 0;
+    for (size_t i = filter_index + (FILTER_BUF_SIZE - count), j = 0; j < count;
+         i++, j++) {
+      sample_t s = filter_buf[i % FILTER_BUF_SIZE];
+      sum_x += s.x;
+      sum_y += s.y;
+    }
+    int8_t x_ave = sum_x / (int16_t)count;
+    int8_t y_ave = sum_y / (int16_t)count;
+    return {x_ave, y_ave};
+  }
+
  public:
   MouseFuzz() {}
 
@@ -12,39 +51,57 @@ class MouseFuzz : public IMouseFx {
   }
 
   uint32_t get_current_pixel_value(uint32_t time_ms) {
+    // TODO
     (void)time_ms;
     return indicator_color;
   }
 
-  void update_parameter(float percentage) { (void)percentage; }
+  void update_parameter(float percentage) {
+    add_noise = percentage > 0.5f;
+    if (add_noise) {
+      noise_param = (percentage - 0.5f) * 2;
+      log_line("noise param %f", noise_param);
+    } else {
+      filter_param = 1.0f - (percentage * 2.0f);
+      log_line("filter param %f", filter_param);
+    }
+  }
 
-  void tick(uint32_t time_ms) { (void)time_ms; }
+  void tick(uint32_t time_ms) {
+    // TODO add filter samples 0,0 if time since last report > n
+    if (time_ms - last_mouse_report_time > 700) {
+      add_filter_sample(0, 0);
+      last_mouse_report_time = time_ms;
+    }
+  }
 
   void deinit() {}
 
+  void process_with_noise(hid_mouse_report_t const *report, uint32_t time_ms) {
+    (void)time_ms;
+    float adj_noise = noise_param / 3.0f;
+    int8_t x = (int8_t)round(((float)(int8_t)get_random_byte() * adj_noise) +
+                             (float)report->x);
+    int8_t y = (int8_t)round(((float)(int8_t)get_random_byte() * adj_noise) +
+                             (float)report->y);
+    send_mouse_report(report->buttons, x, y, report->wheel, report->pan);
+  }
+
+  void process_with_filter(hid_mouse_report_t const *report, uint32_t time_ms) {
+    (void)time_ms;
+    add_filter_sample(report->x, report->y);
+    sample_t filtered = get_filtered_samples();
+    send_mouse_report(report->buttons, filtered.x, filtered.y, report->wheel,
+                      report->pan);
+  }
+
   void process_mouse_report(hid_mouse_report_t const *report,
                             uint32_t time_ms) {
-    (void)time_ms;
-    int8_t pos_vals[] = {0,   -2, -17, 4,  20,  6,  35, 50,
-                         -10, 1,  66,  11, -20, 22, 10, 120};
-    int8_t neg_vals[] = {0,  2,  17,  -4,  -20, -6,  -35, -50,
-                         10, -1, -66, -11, 20,  -22, -10, -120};
-    int8_t x = 0;
-    uint8_t x_index = (get_random_byte() & 0b00001111);
-    int8_t scalar = 2;
-    if (report->x > 0) {
-      x = pos_vals[x_index] / scalar;
-    } else if (report->x < 0) {
-      x = neg_vals[x_index] / scalar;
+    last_mouse_report_time = time_ms;
+    if (add_noise) {
+      process_with_noise(report, time_ms);
+    } else {
+      process_with_filter(report, time_ms);
     }
-    uint8_t y = 0;
-    uint8_t y_index = (get_random_byte() & 0b00001111);
-    if (report->y > 0) {
-      y = pos_vals[y_index] / scalar;
-    } else if (report->y < 0) {
-      y = neg_vals[y_index] / scalar;
-    }
-    log_line("x %i", x);
-    send_mouse_report(report->buttons, x, y, report->wheel, report->pan);
   }
 };
