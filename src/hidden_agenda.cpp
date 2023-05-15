@@ -61,8 +61,9 @@
 // TODO update this
 #define PIX_DATA_GPIO 29
 #define FOOT_SW_GPIO 28
-#define TOGGLE_1_GPIO 6
-#define TOGGLE_2_GPIO 7
+// TODO update!!!!
+#define TOGGLE_1_GPIO 2
+#define TOGGLE_2_GPIO 1
 #define KNOB_ADC_GPIO 26
 
 #define PIX_PIO pio0
@@ -170,7 +171,7 @@ inline float read_pot() {
 }
 
 void update_from_pot() {
-  static float previous_adc_reading = -1.0f;
+  static float previous_adc_reading = read_pot();
   float adc = read_pot();
   float delta = previous_adc_reading - adc;
   float dead_zone = use_increased_dead_zone ? ADC_DEAD_ZONE * 4 : ADC_DEAD_ZONE;
@@ -195,8 +196,11 @@ void update_from_pot() {
       mouse_fx[slot]->initialize(time_ms, adc);
       keyboard_fx[active_fx_slot]->deinit();
       keyboard_fx[slot]->initialize(time_ms, adc);
+      settings.active_fx_slot = slot;
+      int written = write_settings_to_persistence(settings);
+      log_line("wrote pers: %d", written);
     }
-    settings.active_fx_slot = slot;
+    
   }
 }
 
