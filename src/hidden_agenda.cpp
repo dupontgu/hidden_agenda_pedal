@@ -35,6 +35,7 @@
 #include "kbd_fx/kbd_fx_harmonizer.hpp"
 #include "kbd_fx/kbd_fx_passthrough.hpp"
 #include "kbd_fx/kbd_fx_tremolo.hpp"
+#include "mouse_fx/mouse_fx_looper.hpp"
 #include "mouse_fx/mouse_fx_fuzz.hpp"
 #include "mouse_fx/mouse_fx_passthrough.hpp"
 #include "mouse_fx/mouse_fx_reverb.hpp"
@@ -84,6 +85,7 @@ static struct {
 } hid_info[CFG_TUH_HID];
 
 MouseFuzz mouse_fuzz;
+MouseLooper mouse_looper;
 MousePassthrough mouse_passthrough;
 MouseReverb mouse_reverb;
 MouseXOver mouse_xover;
@@ -93,9 +95,8 @@ KeyboardDelay keyboard_delay;
 KeyboardHarmonizer keyboard_harmonizer;
 // LAST FX (at index MAX_FX) should always be passthrough! This is what gets run
 // when pedal is "off"
-static IMouseFx* mouse_fx[] = {&mouse_xover, &mouse_reverb,
-                               &mouse_fuzz, &mouse_passthrough,
-                               &mouse_passthrough};
+static IMouseFx* mouse_fx[] = {&mouse_looper, &mouse_reverb, &mouse_fuzz,
+                               &mouse_xover, &mouse_passthrough};
 static IKeyboardFx* keyboard_fx[] = {
     &keyboard_delay, &keyboard_tremolo, &keyboard_harmonizer,
     &keyboard_passthrough, &keyboard_passthrough};
