@@ -352,6 +352,7 @@ void core1_main() {
   // Use tuh_configure() to pass pio configuration to the host stack
   // Note: tuh_configure() must be called before
   pio_usb_configuration_t pio_cfg = PIO_USB_DEFAULT_CONFIG;
+  pio_cfg.pin_dp = 3;
   tuh_configure(1, TUH_CFGID_RPI_PIO_USB_CONFIGURATION, &pio_cfg);
 
   // To run USB SOF interrupt in core1, init host stack for pio_usb (roothub
