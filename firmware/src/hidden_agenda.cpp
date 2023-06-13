@@ -35,8 +35,8 @@
 #include "kbd_fx/kbd_fx_harmonizer.hpp"
 #include "kbd_fx/kbd_fx_passthrough.hpp"
 #include "kbd_fx/kbd_fx_tremolo.hpp"
-#include "mouse_fx/mouse_fx_looper.hpp"
 #include "mouse_fx/mouse_fx_fuzz.hpp"
+#include "mouse_fx/mouse_fx_looper.hpp"
 #include "mouse_fx/mouse_fx_passthrough.hpp"
 #include "mouse_fx/mouse_fx_reverb.hpp"
 #include "mouse_fx/mouse_fx_xover.hpp"
@@ -79,6 +79,9 @@
 #define ADC_DEAD_ZONE 0.015f
 
 #define LOG_BUFFER_SIZE 1024
+
+#define REPL_PARAM_SLOTS 3
+#define REPL_TOKEN ":"
 
 static struct {
   uint8_t report_count;
@@ -145,12 +148,58 @@ void flush_log() {
   }
 }
 
+void reboot_to_uf2(uint gpio, uint32_t events) {
+  (void)gpio;
+  (void)events;
+  reset_usb_boot(0, 0);
+}
+
+// process input line from CDC, parse out commands
+void repl(char* input) {
+  char* slots[REPL_PARAM_SLOTS] = {NULL};
+  size_t i = 0;
+  char* t = strtok(input, REPL_TOKEN);
+  while (t != NULL && i < REPL_PARAM_SLOTS) {
+    slots[i] = t;
+    i++;
+    t = strtok(NULL, REPL_TOKEN);
+  }
+
+  if (i < 2 || (strcmp(slots[0], "cmd") != 0)) {
+    log_line("unknown command");
+    return;
+  }
+
+  bool consumed = false;
+  if (strcmp(slots[1], "boot") == 0) {
+    log_line("resetting to usb boot mode");
+    consumed = true;
+    reboot_to_uf2(0, 0);
+  } else if (i >= 2 && strcmp(slots[1], "brightness") == 0) {
+    int brightness = atoi(slots[2]);
+    if (brightness > 0) {
+      if (brightness < 100) {
+        settings.led_brightness = (float)brightness / 100.0f;
+        write_settings_to_persistence(settings);
+        log_line("set brightness to: %d%%", brightness);
+      } else {
+        log_line("please enter brightness integer between 1 - 100");
+      }
+      consumed = true;
+    }
+  }
+
+  if (!consumed) {
+    log_line("unknown command");
+  }
+}
+
 void process_cdc_input() {
   if (cdc_read_head) {
     if (cdc_read_buffer[cdc_read_head - 1] == '\r') {
       cdc_read_buffer[cdc_read_head - 1] = 0;
       // TODO - actually process the line rather than log it
-      log_line(cdc_read_buffer);
+      repl(cdc_read_buffer);
       cdc_read_head = 0;
     }
     tud_cdc_read_flush();
@@ -197,10 +246,8 @@ void update_from_pot() {
       keyboard_fx[active_fx_slot]->deinit();
       keyboard_fx[slot]->initialize(time_ms, adc);
       settings.active_fx_slot = slot;
-      int written = write_settings_to_persistence(settings);
-      log_line("wrote pers: %d", written);
+      write_settings_to_persistence(settings);
     }
-    
   }
 }
 
@@ -230,12 +277,6 @@ void read_toggle_switch() {
   // if we're switching modes, disable the fx and make the knob less sensitive
   fx_enabled = false;
   use_increased_dead_zone = 1;
-}
-
-void reboot_to_uf2(uint gpio, uint32_t events) {
-  (void)gpio;
-  (void)events;
-  reset_usb_boot(0, 0);
 }
 
 void init_soft_boot() {
@@ -314,7 +355,7 @@ void led_task(uint32_t time_ms) {
       color = mouse_fx[active_fx_slot]->get_current_pixel_value(time_ms);
     }
   }
-  set_pixel(color);
+  set_pixel(color_at_brightness(color, settings.led_brightness));
 }
 
 void io_task(uint32_t time_ms) {
