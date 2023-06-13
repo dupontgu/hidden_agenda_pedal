@@ -41,12 +41,12 @@
 #include "mouse_fx/mouse_fx_reverb.hpp"
 #include "mouse_fx/mouse_fx_xover.hpp"
 #include "persistence.h"
-#include "pico/bootrom.h"
 #include "pico/multicore.h"
 #include "pico/stdlib.h"
 #include "pico/time.h"
 #include "pio_usb.h"
 #include "tusb.h"
+#include "repl.h"
 #include "usb_descriptors.h"
 #include "util.h"
 #include "ws2812.pio.h"
@@ -80,9 +80,6 @@
 
 #define LOG_BUFFER_SIZE 1024
 
-#define REPL_PARAM_SLOTS 3
-#define REPL_TOKEN ":"
-
 static struct {
   uint8_t report_count;
   tuh_hid_report_info_t report_info[MAX_REPORT];
@@ -106,7 +103,6 @@ static IKeyboardFx* keyboard_fx[] = {
     &keyboard_passthrough, &keyboard_passthrough};
 static uint8_t active_device_type = HID_ITF_PROTOCOL_KEYBOARD;
 static bool fx_enabled = false;
-static settings_t settings;
 static uint8_t active_sw_mode = SW_MODE_SET;
 static bool use_increased_dead_zone = 0;
 
@@ -148,52 +144,6 @@ void flush_log() {
   }
 }
 
-void reboot_to_uf2(uint gpio, uint32_t events) {
-  (void)gpio;
-  (void)events;
-  reset_usb_boot(0, 0);
-}
-
-// process input line from CDC, parse out commands
-void repl(char* input) {
-  char* slots[REPL_PARAM_SLOTS] = {NULL};
-  size_t i = 0;
-  char* t = strtok(input, REPL_TOKEN);
-  while (t != NULL && i < REPL_PARAM_SLOTS) {
-    slots[i] = t;
-    i++;
-    t = strtok(NULL, REPL_TOKEN);
-  }
-
-  if (i < 2 || (strcmp(slots[0], "cmd") != 0)) {
-    log_line("unknown command");
-    return;
-  }
-
-  bool consumed = false;
-  if (strcmp(slots[1], "boot") == 0) {
-    log_line("resetting to usb boot mode");
-    consumed = true;
-    reboot_to_uf2(0, 0);
-  } else if (i >= 2 && strcmp(slots[1], "brightness") == 0) {
-    int brightness = atoi(slots[2]);
-    if (brightness > 0) {
-      if (brightness < 100) {
-        settings.led_brightness = (float)brightness / 100.0f;
-        write_settings_to_persistence(settings);
-        log_line("set brightness to: %d%%", brightness);
-      } else {
-        log_line("please enter brightness integer between 1 - 100");
-      }
-      consumed = true;
-    }
-  }
-
-  if (!consumed) {
-    log_line("unknown command");
-  }
-}
-
 void process_cdc_input() {
   if (cdc_read_head) {
     if (cdc_read_buffer[cdc_read_head - 1] == '\r') {
@@ -207,8 +157,8 @@ void process_cdc_input() {
 }
 
 void on_fx_param_tweaked(float percentage) {
-  mouse_fx[settings.active_fx_slot]->update_parameter(percentage);
-  keyboard_fx[settings.active_fx_slot]->update_parameter(percentage);
+  mouse_fx[active_settings.active_fx_slot]->update_parameter(percentage);
+  keyboard_fx[active_settings.active_fx_slot]->update_parameter(percentage);
 }
 
 inline float read_pot() {
@@ -237,7 +187,7 @@ void update_from_pot() {
   } else {
     uint8_t slot = adc * MAX_FX;
     if (slot == MAX_FX) slot--;
-    uint8_t active_fx_slot = settings.active_fx_slot;
+    uint8_t active_fx_slot = active_settings.active_fx_slot;
     if (slot != active_fx_slot) {
       log_line("fx slot: %u", slot);
       uint32_t time_ms = MS_SINCE_BOOT;
@@ -245,8 +195,8 @@ void update_from_pot() {
       mouse_fx[slot]->initialize(time_ms, adc);
       keyboard_fx[active_fx_slot]->deinit();
       keyboard_fx[slot]->initialize(time_ms, adc);
-      settings.active_fx_slot = slot;
-      write_settings_to_persistence(settings);
+      active_settings.active_fx_slot = slot;
+      write_settings_to_persistence(active_settings);
     }
   }
 }
@@ -338,7 +288,7 @@ void led_task(uint32_t time_ms) {
   }
   frame_of_last_pix_update = frame;
   uint32_t color = 0;
-  uint8_t active_fx_slot = settings.active_fx_slot;
+  uint8_t active_fx_slot = active_settings.active_fx_slot;
   if (active_sw_mode == SW_MODE_SET) {
     // blink
     if (frame % 20 > 10) {
@@ -355,7 +305,7 @@ void led_task(uint32_t time_ms) {
       color = mouse_fx[active_fx_slot]->get_current_pixel_value(time_ms);
     }
   }
-  set_pixel(color_at_brightness(color, settings.led_brightness));
+  set_pixel(color_at_brightness(color, active_settings.led_brightness));
 }
 
 void io_task(uint32_t time_ms) {
@@ -372,16 +322,16 @@ void io_task(uint32_t time_ms) {
 
 void fx_task(uint32_t time_ms) {
   if (fx_enabled) {
-    mouse_fx[settings.active_fx_slot]->tick(time_ms);
-    keyboard_fx[settings.active_fx_slot]->tick(time_ms);
+    mouse_fx[active_settings.active_fx_slot]->tick(time_ms);
+    keyboard_fx[active_settings.active_fx_slot]->tick(time_ms);
   }
 }
 
 void init_settings() {
   init_persistence();
-  settings = read_settings_from_persistence();
+  active_settings = read_settings_from_persistence();
   for (size_t i = 0; i < MAX_FX; i++) {
-    uint32_t color = settings.slot_colors[i];
+    uint32_t color = active_settings.slot_colors[i];
     mouse_fx[i]->set_indicator_color(color);
     keyboard_fx[i]->set_indicator_color(color);
   }
@@ -423,8 +373,8 @@ int main(void) {
 
   float param_value = read_pot();
   uint32_t now = MS_SINCE_BOOT;
-  mouse_fx[settings.active_fx_slot]->initialize(now, param_value);
-  keyboard_fx[settings.active_fx_slot]->initialize(now, param_value);
+  mouse_fx[active_settings.active_fx_slot]->initialize(now, param_value);
+  keyboard_fx[active_settings.active_fx_slot]->initialize(now, param_value);
 
   while (1) {
     uint32_t time_ms = MS_SINCE_BOOT;
@@ -489,7 +439,7 @@ static void process_kbd_report(uint8_t dev_addr,
                                uint32_t time_ms) {
   (void)dev_addr;
   active_device_type = HID_ITF_PROTOCOL_KEYBOARD;
-  uint8_t slot = fx_enabled ? settings.active_fx_slot : MAX_FX;
+  uint8_t slot = fx_enabled ? active_settings.active_fx_slot : MAX_FX;
   keyboard_fx[slot]->process_keyboard_report(report, time_ms);
 }
 
@@ -499,7 +449,7 @@ static void process_mouse_report(uint8_t dev_addr,
                                  uint32_t time_ms) {
   (void)dev_addr;
   active_device_type = HID_ITF_PROTOCOL_MOUSE;
-  uint8_t slot = fx_enabled ? settings.active_fx_slot : MAX_FX;
+  uint8_t slot = fx_enabled ? active_settings.active_fx_slot : MAX_FX;
   mouse_fx[slot]->process_mouse_report(report, time_ms);
 }
 

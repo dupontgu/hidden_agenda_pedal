@@ -16,4 +16,7 @@ settings_t read_settings_from_persistence();
 int write_settings_to_persistence(settings_t settings);
 void init_persistence();
 
+// Singleton instance for now
+extern settings_t active_settings;
+
 #endif

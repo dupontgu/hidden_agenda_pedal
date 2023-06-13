@@ -22,6 +22,8 @@ static settings_t default_settings = {
     .led_brightness = 1.0,
     .slot_colors = {0xFFFF4000, 0xFF4000FF, 0xFF00FF40, 0xFFAA0070}};
 
+settings_t active_settings = default_settings;
+
 static void eeprom_polling() {
   uint8_t i = 0;
   uint8_t tmp;
