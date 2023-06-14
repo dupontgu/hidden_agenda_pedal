@@ -40,13 +40,13 @@
 #include "mouse_fx/mouse_fx_passthrough.hpp"
 #include "mouse_fx/mouse_fx_reverb.hpp"
 #include "mouse_fx/mouse_fx_xover.hpp"
-#include "persistence.h"
+#include "i2c_persistence.hpp"
 #include "pico/multicore.h"
 #include "pico/stdlib.h"
 #include "pico/time.h"
 #include "pio_usb.h"
 #include "tusb.h"
-#include "repl.h"
+#include "repl.hpp"
 #include "usb_descriptors.h"
 #include "util.h"
 #include "ws2812.pio.h"
@@ -85,6 +85,8 @@ static struct {
   tuh_hid_report_info_t report_info[MAX_REPORT];
 } hid_info[CFG_TUH_HID];
 
+I2cPersistence settings;
+Repl repl(&settings);
 MouseFuzz mouse_fuzz;
 MouseLooper mouse_looper;
 MousePassthrough mouse_passthrough;
@@ -149,7 +151,7 @@ void process_cdc_input() {
     if (cdc_read_buffer[cdc_read_head - 1] == '\r') {
       cdc_read_buffer[cdc_read_head - 1] = 0;
       // TODO - actually process the line rather than log it
-      repl(cdc_read_buffer);
+      repl.process(cdc_read_buffer);
       cdc_read_head = 0;
     }
     tud_cdc_read_flush();
@@ -157,8 +159,9 @@ void process_cdc_input() {
 }
 
 void on_fx_param_tweaked(float percentage) {
-  mouse_fx[active_settings.active_fx_slot]->update_parameter(percentage);
-  keyboard_fx[active_settings.active_fx_slot]->update_parameter(percentage);
+  uint8_t active_slot = settings.getActiveFxSlot();
+  mouse_fx[active_slot]->update_parameter(percentage);
+  keyboard_fx[active_slot]->update_parameter(percentage);
 }
 
 inline float read_pot() {
@@ -187,7 +190,7 @@ void update_from_pot() {
   } else {
     uint8_t slot = adc * MAX_FX;
     if (slot == MAX_FX) slot--;
-    uint8_t active_fx_slot = active_settings.active_fx_slot;
+    uint8_t active_fx_slot = settings.getActiveFxSlot();
     if (slot != active_fx_slot) {
       log_line("fx slot: %u", slot);
       uint32_t time_ms = MS_SINCE_BOOT;
@@ -195,8 +198,7 @@ void update_from_pot() {
       mouse_fx[slot]->initialize(time_ms, adc);
       keyboard_fx[active_fx_slot]->deinit();
       keyboard_fx[slot]->initialize(time_ms, adc);
-      active_settings.active_fx_slot = slot;
-      write_settings_to_persistence(active_settings);
+      settings.setActiveFxSlot(slot);
     }
   }
 }
@@ -288,7 +290,7 @@ void led_task(uint32_t time_ms) {
   }
   frame_of_last_pix_update = frame;
   uint32_t color = 0;
-  uint8_t active_fx_slot = active_settings.active_fx_slot;
+  uint8_t active_fx_slot = settings.getActiveFxSlot();
   if (active_sw_mode == SW_MODE_SET) {
     // blink
     if (frame % 20 > 10) {
@@ -305,7 +307,7 @@ void led_task(uint32_t time_ms) {
       color = mouse_fx[active_fx_slot]->get_current_pixel_value(time_ms);
     }
   }
-  set_pixel(color_at_brightness(color, active_settings.led_brightness));
+  set_pixel(color_at_brightness(color, settings.getLedBrightness()));
 }
 
 void io_task(uint32_t time_ms) {
@@ -322,16 +324,16 @@ void io_task(uint32_t time_ms) {
 
 void fx_task(uint32_t time_ms) {
   if (fx_enabled) {
-    mouse_fx[active_settings.active_fx_slot]->tick(time_ms);
-    keyboard_fx[active_settings.active_fx_slot]->tick(time_ms);
+    uint8_t active_slot = settings.getActiveFxSlot();
+    mouse_fx[active_slot]->tick(time_ms);
+    keyboard_fx[active_slot]->tick(time_ms);
   }
 }
 
 void init_settings() {
-  init_persistence();
-  active_settings = read_settings_from_persistence();
+  settings.initialize();
   for (size_t i = 0; i < MAX_FX; i++) {
-    uint32_t color = active_settings.slot_colors[i];
+    uint32_t color = settings.getLedColor(i);
     mouse_fx[i]->set_indicator_color(color);
     keyboard_fx[i]->set_indicator_color(color);
   }
@@ -373,8 +375,9 @@ int main(void) {
 
   float param_value = read_pot();
   uint32_t now = MS_SINCE_BOOT;
-  mouse_fx[active_settings.active_fx_slot]->initialize(now, param_value);
-  keyboard_fx[active_settings.active_fx_slot]->initialize(now, param_value);
+  uint8_t active_slot = settings.getActiveFxSlot();
+  mouse_fx[active_slot]->initialize(now, param_value);
+  keyboard_fx[active_slot]->initialize(now, param_value);
 
   while (1) {
     uint32_t time_ms = MS_SINCE_BOOT;
@@ -439,7 +442,7 @@ static void process_kbd_report(uint8_t dev_addr,
                                uint32_t time_ms) {
   (void)dev_addr;
   active_device_type = HID_ITF_PROTOCOL_KEYBOARD;
-  uint8_t slot = fx_enabled ? active_settings.active_fx_slot : MAX_FX;
+  uint8_t slot = fx_enabled ? settings.getActiveFxSlot() : MAX_FX;
   keyboard_fx[slot]->process_keyboard_report(report, time_ms);
 }
 
@@ -449,7 +452,7 @@ static void process_mouse_report(uint8_t dev_addr,
                                  uint32_t time_ms) {
   (void)dev_addr;
   active_device_type = HID_ITF_PROTOCOL_MOUSE;
-  uint8_t slot = fx_enabled ? active_settings.active_fx_slot : MAX_FX;
+  uint8_t slot = fx_enabled ? settings.getActiveFxSlot() : MAX_FX;
   mouse_fx[slot]->process_mouse_report(report, time_ms);
 }
 

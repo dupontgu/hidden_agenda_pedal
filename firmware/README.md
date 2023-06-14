@@ -19,3 +19,10 @@
     $ make
     ```
 1. Find the compiled UF2 file at `build/src/hidden_agenda.uf2` - this can loaded onto the RP2040 while it is in USB bootloader mode.
+
+## Running Tests (Any Platform?)
+Code in the [`common`](common) directory should be platform agnostic. Therefore it is possible to run tests against this code on your build machine. The `test` directory will contain an executable that runs default tests. To build this executable, follow the steps above, but add the `TEST` flag when running cmake:
+```
+cmake -DTEST=ON ..
+```
+If you've previously built the firmware, you'll have to delete the `CMakeCache.txt` file in the build directory. You'll have to delete this each time you change the `TEST` flag.

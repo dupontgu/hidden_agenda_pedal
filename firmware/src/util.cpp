@@ -1,5 +1,6 @@
 #include <stdio.h>
 
+#include "util.h"
 #include "hardware/structs/rosc.h"
 #include "pico/unique_id.h"
 #include "pico/bootrom.h"
@@ -8,10 +9,6 @@
 // 6 bytes for "HAXXX-"
 #define SERIAL_NUMBER_OFFSET 6
 
-void log_line(const char *format, ...);
-
-#ifndef UTIL_H
-#define UTIL_H
 const char *get_serial_number() {
   // 16 chars for 64 bit uid, 1 for terminating 0
   static char serial_number_buffer[SERIAL_NUMBER_OFFSET + 16 + 1] = {0};
@@ -34,9 +31,8 @@ uint8_t get_random_byte() {
   return x;
 }
 
-void reboot_to_uf2(uint gpio, uint32_t events) {
+void reboot_to_uf2(unsigned int gpio, uint32_t events) {
   (void)gpio;
   (void)events;
   reset_usb_boot(0, 0);
 }
-#endif

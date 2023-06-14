@@ -7,8 +7,9 @@ pico_generate_pio_header(${target_name} ${CMAKE_CURRENT_LIST_DIR}/ws2812.pio OUT
 target_sources(${target_name} PRIVATE
  tud_callbacks.cpp
  hidden_agenda.cpp
- usb_descriptors.c
- persistence.cpp
+ usb_descriptors.cpp
+ i2c_persistence.cpp
+ util.cpp
  # can use 'tinyusb_pico_pio_usb' library later when pico-sdk is updated
  ${PICO_TINYUSB_PATH}/src/portable/raspberrypi/pio_usb/dcd_pio_usb.c
  ${PICO_TINYUSB_PATH}/src/portable/raspberrypi/pio_usb/hcd_pio_usb.c
@@ -24,6 +25,6 @@ target_compile_definitions(${target_name} PRIVATE PIO_USB_USE_TINYUSB)
 # needed so tinyusb can find tusb_config.h
 target_include_directories(${target_name} PRIVATE ${CMAKE_CURRENT_LIST_DIR})
 
-target_link_libraries(${target_name} PRIVATE pico_stdlib pico_pio_usb tinyusb_device tinyusb_host hardware_adc pico_unique_id hardware_i2c)
+target_link_libraries(${target_name} PRIVATE common pico_stdlib pico_pio_usb tinyusb_device tinyusb_host hardware_adc pico_unique_id hardware_i2c)
 pico_add_extra_outputs(${target_name})
 
