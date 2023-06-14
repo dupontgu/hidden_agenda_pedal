@@ -1,5 +1,4 @@
 #include "custom_hid.hpp"
-#include "tusb.h"
 
 class MousePassthrough : public IMouseFx {
  private:
@@ -25,7 +24,7 @@ class MousePassthrough : public IMouseFx {
 
   void deinit() {}
 
-  void process_mouse_report(hid_mouse_report_t const *report,
+  void process_mouse_report(ha_mouse_report_t const *report,
                             uint32_t time_ms) {
     (void)time_ms;
     send_mouse_report(report->buttons, report->x, report->y, report->wheel, 0);

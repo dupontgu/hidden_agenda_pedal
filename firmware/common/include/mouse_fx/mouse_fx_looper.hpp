@@ -1,5 +1,4 @@
 #include "custom_hid.hpp"
-#include "tusb.h"
 
 #define MOUSE_LOOP_BUFFER_SIZE 4096
 #define MOUSE_LOOP_MAX_SPEED 2.5
@@ -60,7 +59,7 @@ class MouseLooper : public IMouseFx {
 
   void deinit() {}
 
-  void process_mouse_report(hid_mouse_report_t const *report,
+  void process_mouse_report(ha_mouse_report_t const *report,
                             uint32_t time_ms) {
     bool recording_btn_held = (report->buttons & 0b10) > 0;
     latest_buttons_minus_right = report->buttons & 0b11111101;

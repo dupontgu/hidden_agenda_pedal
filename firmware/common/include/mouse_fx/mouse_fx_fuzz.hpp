@@ -1,5 +1,4 @@
 #include "custom_hid.hpp"
-#include "tusb.h"
 
 #define FILTER_BUF_SIZE 50
 
@@ -77,7 +76,7 @@ class MouseFuzz : public IMouseFx {
 
   void deinit() {}
 
-  void process_with_noise(hid_mouse_report_t const *report, uint32_t time_ms) {
+  void process_with_noise(ha_mouse_report_t const *report, uint32_t time_ms) {
     (void)time_ms;
     float adj_noise = noise_param / 3.0f;
     int8_t x = (int8_t)round(((float)(int8_t)get_random_byte() * adj_noise) +
@@ -87,7 +86,7 @@ class MouseFuzz : public IMouseFx {
     send_mouse_report(report->buttons, x, y, report->wheel, report->pan);
   }
 
-  void process_with_filter(hid_mouse_report_t const *report, uint32_t time_ms) {
+  void process_with_filter(ha_mouse_report_t const *report, uint32_t time_ms) {
     (void)time_ms;
     add_filter_sample(report->x, report->y);
     sample_t filtered = get_filtered_samples();
@@ -95,7 +94,7 @@ class MouseFuzz : public IMouseFx {
                       report->pan);
   }
 
-  void process_mouse_report(hid_mouse_report_t const *report,
+  void process_mouse_report(ha_mouse_report_t const *report,
                             uint32_t time_ms) {
     last_mouse_report_time = time_ms;
     if (add_noise) {

@@ -1,5 +1,4 @@
 #include "custom_hid.hpp"
-#include "tusb.h"
 
 // this one we can change
 #define DELAY_SLOT_COUNT 6
@@ -14,7 +13,7 @@ typedef struct {
 } delay_slot_t;
 
 class KeyboardDelay : public IKeyboardFx {
-  hid_keyboard_report_t latest_report;
+  ha_keyboard_report_t latest_report;
   delay_slot_t slots[DELAY_SLOT_COUNT];
   float pixel_cycle_progress = 0.0;
   uint32_t pixel_last_update = 0;
@@ -121,7 +120,7 @@ class KeyboardDelay : public IKeyboardFx {
     }
   }
 
-  void process_keyboard_report(hid_keyboard_report_t const *report,
+  void process_keyboard_report(ha_keyboard_report_t const *report,
                                uint32_t time_ms) {
     release_all(false);
     latest_report.modifier = report->modifier;

@@ -1,5 +1,4 @@
 #include "custom_hid.hpp"
-#include "tusb.h"
 
 #define REVERB_BUF_SIZE 18
 #define REVERB_DEBOUNCE 10
@@ -91,7 +90,7 @@ class MouseReverb : public IMouseFx {
 
   void deinit() {}
 
-  void process_mouse_report(hid_mouse_report_t const *report,
+  void process_mouse_report(ha_mouse_report_t const *report,
                             uint32_t time_ms) {
     last_sample_time_ms = time_ms;
     current_velocity = 1.0;

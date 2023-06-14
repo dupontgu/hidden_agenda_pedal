@@ -31,6 +31,7 @@
 #include "bsp/board.h"
 #include "hardware/adc.h"
 #include "hardware/watchdog.h"
+#include "i2c_persistence.hpp"
 #include "kbd_fx/kbd_fx_delay.hpp"
 #include "kbd_fx/kbd_fx_harmonizer.hpp"
 #include "kbd_fx/kbd_fx_passthrough.hpp"
@@ -40,13 +41,12 @@
 #include "mouse_fx/mouse_fx_passthrough.hpp"
 #include "mouse_fx/mouse_fx_reverb.hpp"
 #include "mouse_fx/mouse_fx_xover.hpp"
-#include "i2c_persistence.hpp"
 #include "pico/multicore.h"
 #include "pico/stdlib.h"
 #include "pico/time.h"
 #include "pio_usb.h"
-#include "tusb.h"
 #include "repl.hpp"
+#include "tusb.h"
 #include "usb_descriptors.h"
 #include "util.h"
 #include "ws2812.pio.h"
@@ -150,7 +150,6 @@ void process_cdc_input() {
   if (cdc_read_head) {
     if (cdc_read_buffer[cdc_read_head - 1] == '\r') {
       cdc_read_buffer[cdc_read_head - 1] = 0;
-      // TODO - actually process the line rather than log it
       repl.process(cdc_read_buffer);
       cdc_read_head = 0;
     }
@@ -443,7 +442,8 @@ static void process_kbd_report(uint8_t dev_addr,
   (void)dev_addr;
   active_device_type = HID_ITF_PROTOCOL_KEYBOARD;
   uint8_t slot = fx_enabled ? settings.getActiveFxSlot() : MAX_FX;
-  keyboard_fx[slot]->process_keyboard_report(report, time_ms);
+  keyboard_fx[slot]->process_keyboard_report((ha_keyboard_report_t*)report,
+                                             time_ms);
 }
 
 // send mouse report to usb device CDC
@@ -453,7 +453,7 @@ static void process_mouse_report(uint8_t dev_addr,
   (void)dev_addr;
   active_device_type = HID_ITF_PROTOCOL_MOUSE;
   uint8_t slot = fx_enabled ? settings.getActiveFxSlot() : MAX_FX;
-  mouse_fx[slot]->process_mouse_report(report, time_ms);
+  mouse_fx[slot]->process_mouse_report((ha_mouse_report_t*)report, time_ms);
 }
 
 void tuh_hid_report_received_cb(uint8_t dev_addr, uint8_t instance,

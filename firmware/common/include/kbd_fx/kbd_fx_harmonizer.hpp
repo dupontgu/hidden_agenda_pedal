@@ -1,5 +1,4 @@
 #include "custom_hid.hpp"
-#include "tusb.h"
 
 #define PRESSED_KEYS_COUNT REPORT_KEYCODE_COUNT / 2
 
@@ -47,7 +46,7 @@ class KeyboardHarmonizer : public IKeyboardFx {
 
   void deinit() {}
 
-  void process_keyboard_report(hid_keyboard_report_t const* report,
+  void process_keyboard_report(ha_keyboard_report_t const* report,
                                uint32_t time_ms) {
     (void)time_ms;
     for (size_t i = 0; i < REPORT_KEYCODE_COUNT; i++) {

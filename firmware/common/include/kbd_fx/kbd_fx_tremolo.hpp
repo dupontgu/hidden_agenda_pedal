@@ -1,7 +1,6 @@
 #include <math.h>
 
 #include "custom_hid.hpp"
-#include "tusb.h"
 
 #define SHIFT_FLAG 0b00100000
 #define DUTY_CYCLE_MAX 0xFFFF
@@ -72,7 +71,7 @@ class KeyboardTremolo : public IKeyboardFx {
 
   void deinit() {}
 
-  void process_keyboard_report(hid_keyboard_report_t const *report,
+  void process_keyboard_report(ha_keyboard_report_t const *report,
                                uint32_t time_ms) {
     (void)time_ms;
     uint8_t modifier_flag = 0;

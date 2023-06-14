@@ -1,7 +1,13 @@
 #include "custom_hid.hpp"
-#include "tusb.h"
 
 #define MOUSE_XOVER_THROTTLE_MAX 200
+
+// Should match https://github.com/hathach/tinyusb/blob/master/src/class/hid/hid.h
+#ifndef HID_KEY_A
+#define HID_KEY_A 0x04
+#define HID_KEY_0 0x27
+#define HID_KEY_BACKSPACE 0x2A
+#endif
 
 class MouseXOver : public IMouseFx {
  private:
@@ -65,7 +71,7 @@ class MouseXOver : public IMouseFx {
 
   void deinit() {}
 
-  void process_mouse_report(hid_mouse_report_t const *report,
+  void process_mouse_report(ha_mouse_report_t const *report,
                             uint32_t time_ms) {
     (void)time_ms;
     if (report->buttons & 0b10) {
