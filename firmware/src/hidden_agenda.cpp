@@ -458,7 +458,15 @@ static void process_mouse_report(uint8_t dev_addr,
 
 void tuh_hid_report_received_cb(uint8_t dev_addr, uint8_t instance,
                                 uint8_t const* report, uint16_t len) {
-  (void)len;
+  static char hid_log_buff[128];
+  if (settings.getRawHidLogsEnabled()) {
+    size_t log_i = sprintf(hid_log_buff, "hid:");
+    for (size_t i = 0; i < len; i++) {
+      log_i += sprintf(hid_log_buff + log_i, " %02x", report[i]);
+    }
+    log_line((const char*)hid_log_buff);
+  }
+
   uint8_t itf_protocol = HID_ITF_PROTOCOL_NONE;
   uint8_t const* report_offset = report;
 

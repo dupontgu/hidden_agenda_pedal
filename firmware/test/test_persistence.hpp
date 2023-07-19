@@ -13,10 +13,13 @@ class InMemoryPersistence : public IPersistence {
   float getLedBrightness() { return led_brightness; }
   void setLedColor(uint8_t slot, uint32_t color) { slots[slot] = color; }
   uint32_t getLedColor(uint8_t slot) { return slots[slot]; }
+  void setRawHidLogsEnabled(bool enabled) { raw_hid_logs_enabled = enabled; }
+  bool getRawHidLogsEnabled() { return raw_hid_logs_enabled; }
 
  private:
   uint8_t active_slot;
   uint8_t report_mode;
+  bool raw_hid_logs_enabled;
   float led_brightness;
   uint32_t slots[4];
 };

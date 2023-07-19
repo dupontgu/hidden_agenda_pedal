@@ -26,8 +26,7 @@ void test_repl() {
     Repl repl(&p);
 
     // JUNK
-    input("junk1234");
-    repl.process(in_buf);
+    repl.process(input("junk1234"));
 
     // BRIGHTNESS
     assert("initial brightness should be 0", p.getLedBrightness() < 0.000001f);
@@ -48,11 +47,18 @@ void test_repl() {
 
     repl.process(input("cmd:brightness:40"));
     assert("brightness should be 0.4", p.getLedBrightness() == 0.4f);
-
+    
     //REBOOT
     assert("reboot should not have been hit yet", reboot_count == 0);
     repl.process(input("cmd:boot"));
     assert("reboot should have been hit once", reboot_count == 1);
+
+    //LOGS
+    assert("raw logging should initially be off", !p.getRawHidLogsEnabled());
+    repl.process(input("cmd:raw_hid:on"));
+    assert("raw logging should be enabled", p.getRawHidLogsEnabled());
+    repl.process(input("cmd:raw_hid:off"));
+    assert("raw logging should be disabled", !p.getRawHidLogsEnabled());
 
     std::cout << "test_repl pass! ";
     dump_logs();

@@ -5,11 +5,15 @@
 
 #ifndef HA_PERS_H
 #define HA_PERS_H
+#define PERSISTENCE_LOG_OFF 0
+#define PERSISTENCE_HID_LOG 1
 
 typedef struct ha_settings {
+  // VERSION ALWAYS FIRST!!
   uint8_t version;
   uint8_t active_fx_slot;
   uint8_t report_parse_mode;
+  uint8_t log_mode;
   float led_brightness;
   uint32_t slot_colors[4];
 } settings_t;
@@ -44,6 +48,13 @@ class I2cPersistence : public IPersistence {
     write();
   }
   inline float getLedBrightness() { return delegate.led_brightness; }
+  inline void setRawHidLogsEnabled(bool enabled) {
+    delegate.log_mode = enabled ? PERSISTENCE_HID_LOG : PERSISTENCE_LOG_OFF;
+    write();
+  }
+  inline bool getRawHidLogsEnabled() {
+    return delegate.log_mode == PERSISTENCE_HID_LOG;
+  }
   void setLedColor(uint8_t slot, uint32_t color) {
     delegate.slot_colors[slot] = color;
     write();
