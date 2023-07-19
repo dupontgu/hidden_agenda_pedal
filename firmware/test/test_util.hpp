@@ -18,6 +18,8 @@ void log_line(const char *format, ...) {
   va_end(args);
 }
 
+void refresh_settings() {}
+
 const char *get_serial_number() { return "abc"; }
 
 uint8_t get_random_byte() { return 0b1010; }

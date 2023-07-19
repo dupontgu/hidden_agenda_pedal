@@ -16,7 +16,7 @@ static bool initialized = false;
 
 static settings_t default_settings = {
     // VERSION MUST ALWAYS STAY FIRST!!!!!
-    .version = 0,
+    .version = 1,
     .active_fx_slot = 0,
     .report_parse_mode = 0,
     .log_mode = PERSISTENCE_LOG_OFF,

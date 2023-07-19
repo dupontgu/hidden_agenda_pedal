@@ -329,7 +329,7 @@ void fx_task(uint32_t time_ms) {
   }
 }
 
-void init_settings() {
+void refresh_settings() {
   settings.initialize();
   for (size_t i = 0; i < MAX_FX; i++) {
     uint32_t color = settings.getLedColor(i);
@@ -370,7 +370,7 @@ int main(void) {
   tud_init(BOARD_TUD_RHPORT);
   init_pix();
   init_io();
-  init_settings();
+  refresh_settings();
 
   float param_value = read_pot();
   uint32_t now = MS_SINCE_BOOT;

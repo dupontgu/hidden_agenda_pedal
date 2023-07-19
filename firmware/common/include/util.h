@@ -5,6 +5,7 @@
 void log_line(const char *format, ...);
 const char *get_serial_number();
 uint8_t get_random_byte();
+void refresh_settings();
 void reboot_to_uf2(unsigned int gpio, uint32_t events);
 
 static inline uint32_t urgb_u32(uint8_t r, uint8_t g, uint8_t b) {

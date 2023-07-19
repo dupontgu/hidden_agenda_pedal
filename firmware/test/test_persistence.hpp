@@ -21,5 +21,5 @@ class InMemoryPersistence : public IPersistence {
   uint8_t report_mode;
   bool raw_hid_logs_enabled;
   float led_brightness;
-  uint32_t slots[4];
+  uint32_t slots[4] = {0, 0, 0, 0};
 };
