@@ -51,17 +51,15 @@
 #include "util.h"
 #include "ws2812.pio.h"
 
+#define PICO_XOSC_STARTUP_DELAY_MULTIPLIER 64
 #define GENERIC_DESKTOP_USAGE_PAGE 0x01
 #define USAGE_MOUSE 0x02
 #define USAGE_KEYBOARD 0x06
 
 #define MS_SINCE_BOOT to_ms_since_boot(get_absolute_time())
-// TODO update this
 #define SOFT_BOOT_BTN_GPIO 0
-// TODO update this
 #define PIX_DATA_GPIO 29
 #define FOOT_SW_GPIO 28
-// TODO update!!!!
 #define TOGGLE_1_GPIO 2
 #define TOGGLE_2_GPIO 1
 #define KNOB_ADC_GPIO 26
