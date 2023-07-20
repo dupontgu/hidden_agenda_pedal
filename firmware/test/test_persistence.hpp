@@ -15,6 +15,16 @@ class InMemoryPersistence : public IPersistence {
   uint32_t getLedColor(uint8_t slot) { return slots[slot]; }
   void setRawHidLogsEnabled(bool enabled) { raw_hid_logs_enabled = enabled; }
   bool getRawHidLogsEnabled() { return raw_hid_logs_enabled; }
+  void resetToDefaults() {
+    active_slot = 0;
+    report_mode = 0;
+    raw_hid_logs_enabled = false;
+    led_brightness = 0.0f;
+    slots[0] = 0;
+    slots[1] = 0;
+    slots[2] = 0;
+    slots[3] = 0;
+  }
 
  private:
   uint8_t active_slot;

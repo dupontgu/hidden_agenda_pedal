@@ -19,6 +19,7 @@ typedef struct ha_settings {
 } settings_t;
 
 settings_t read_settings_from_persistence();
+settings_t get_defaults();
 int write_settings_to_persistence(settings_t settings);
 void init_persistence();
 
@@ -61,6 +62,10 @@ class I2cPersistence : public IPersistence {
   }
   inline uint32_t getLedColor(uint8_t slot) {
     return delegate.slot_colors[slot];
+  }
+  void resetToDefaults() {
+    delegate = get_defaults();
+    write();
   }
   inline void write() {
     if (enable_write) write_settings_to_persistence(delegate);

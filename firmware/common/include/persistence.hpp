@@ -16,6 +16,7 @@ class IPersistence {
   virtual uint32_t getLedColor(uint8_t slot) = 0;
   virtual void setRawHidLogsEnabled(bool enabled) = 0;
   virtual bool getRawHidLogsEnabled() = 0;
+  virtual void resetToDefaults() = 0;
   virtual ~IPersistence() = default;
 };
 #endif

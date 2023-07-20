@@ -171,6 +171,8 @@ settings_t read_settings_internal() {
   return settings;
 }
 
+settings_t get_defaults() { return default_settings; }
+
 settings_t migrate(uint8_t from, uint8_t to, void *persisted) {
   // hopefully I never actually use this
   (void)from;

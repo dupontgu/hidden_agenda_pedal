@@ -15,8 +15,8 @@ char *input(std::string s) {
 
 void assert(std::string msg, bool b) {
     if (b) return;
-    std::cerr << "FAILURE: " << msg << std::endl;
     dump_logs();
+    std::cerr << "FAILURE: " << msg << std::endl;
     exit(0);
 }
 
@@ -58,19 +58,24 @@ void test_repl() {
     repl.process(input("cmd:raw_hid:on"));
     assert("raw logging should be enabled", p.getRawHidLogsEnabled());
     repl.process(input("cmd:raw_hid:off"));
-    assert("raw logging should be disabled", !p.getRawHidLogsEnabled());\
+    assert("raw logging should be disabled", !p.getRawHidLogsEnabled());
 
-    // COLORS
+    //COLORS
     assert("second led color should initially be 0", p.getLedColor(1) == 0);
     repl.process(input("cmd:set_color:33:ffeeff"));
     assert("second led color should still be 0", p.getLedColor(1) == 0);
     repl.process(input("cmd:set_color:2:0xffeeff"));
     assert("second led color should be 0xffeeff", p.getLedColor(1) == 0xffeeff);
     repl.process(input("cmd:set_color:3:ffee"));
-    assert("third  led color should be 0x00ffee", p.getLedColor(2) == 0x00ffee);
+    assert("third led color should be 0x00ffee", p.getLedColor(2) == 0x00ffee);
 
-    std::cout << "test_repl pass! ";
+    //RESET DEFAULTS
+    repl.process(input("cmd:reset"));
+    assert("third led color should be reset to 0", p.getLedColor(2) == 0);
+    assert("brightness should be reset to 0", p.getLedBrightness() == 0.0f);
+
     dump_logs();
+    std::cout << "test_repl PASS!" << std::endl;
     reset();
 }
 

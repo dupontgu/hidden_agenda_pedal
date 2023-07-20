@@ -38,10 +38,16 @@ void Repl::process(char* input) {
 
   // check for manual reset to bootloader mode
   bool consumed = false;
-  if (strncmp(slots[1], "boot", 4) == 0) {
+  if (strcmp(slots[1], "boot") == 0) {
     log_line("resetting to usb boot mode");
     consumed = true;
     reboot_to_uf2(0, 0);
+    // check for setting of LED brightness
+  } else if (strcmp(slots[1], "reset") == 0) {
+    log_line("resetting to default settings");
+    persistence->resetToDefaults();
+    refresh_settings();
+    consumed = true;
     // check for setting of LED brightness
   } else if (i >= 2 && strcmp(slots[1], "brightness") == 0 && slots[2]) {
     int brightness = atoi(slots[2]);
@@ -68,6 +74,7 @@ void Repl::process(char* input) {
       log_line("invalid input, usage: cmd:raw_hid:[on|off]");
     }
     consumed = true;
+    // check for setting of LED color
   } else if (i >= 3 && strcmp(slots[1], "set_color") == 0 && slots[2] &&
              slots[3]) {
     int slot = atoi(slots[2]);
