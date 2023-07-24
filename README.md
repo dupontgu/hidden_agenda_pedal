@@ -10,7 +10,7 @@
  * [Firmware Source Code](firmware/) (and build instructions)
  * [Electronics](hardware/) (schematic/board files)
  * [Enclosure](enclosure/) (CAD/Art)
- * [Alternative Usage](CircuitPython/) (use it as a MIDI controller!!)
+ * [Alternate Usages](./circuitpython/) (use it as a MIDI controller!!)
 
  [<img src=".docs/hidden_agenda_header.jpg" width="500"/>](.docs/hidden_agenda_header.jpg)
 

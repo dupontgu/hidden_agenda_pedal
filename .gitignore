@@ -1,3 +1,4 @@
 build/
 **/src/generated/
 .vscode
+**/.DS_Store
