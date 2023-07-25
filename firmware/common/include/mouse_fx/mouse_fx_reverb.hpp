@@ -49,7 +49,7 @@ class MouseReverb : public IMouseFx {
   void initialize(uint32_t time_ms, float param_percentage) {
     (void)time_ms;
     update_parameter(param_percentage);
-    log_line("m vrb init");
+    log_line("Mouse reverb initialized");
   }
 
   uint32_t get_current_pixel_value(uint32_t time_ms) {
@@ -58,8 +58,9 @@ class MouseReverb : public IMouseFx {
     return color_at_brightness(indicator_color, brightness);
   }
 
-  void update_parameter(float percentage) { 
-    velocity_scalar = MIN_VELOCITY_SCALAR + ((1.0 - MIN_VELOCITY_SCALAR) * percentage);
+  void update_parameter(float percentage) {
+    velocity_scalar =
+        MIN_VELOCITY_SCALAR + ((1.0 - MIN_VELOCITY_SCALAR) * percentage);
     if (velocity_scalar > MAX_VELOCITY_SCALAR) {
       velocity_scalar = MAX_VELOCITY_SCALAR;
     }
@@ -72,15 +73,15 @@ class MouseReverb : public IMouseFx {
       return;
     } else if (time_ms - last_reverb_time_ms < REVERB_DEBOUNCE) {
       return;
-    } 
+    }
     last_reverb_time_ms = time_ms;
     current_velocity = current_velocity * velocity_scalar;
     int8_t x = (int8_t)(buf_average(x_buf) * current_velocity);
     int8_t y = (int8_t)(buf_average(y_buf) * current_velocity);
-    
+
     // no reason to keep going, clear the buffer
     if (x == 0 && y == 0) {
-      for (size_t i = 0; i < REVERB_BUF_SIZE; i++){
+      for (size_t i = 0; i < REVERB_BUF_SIZE; i++) {
         add_sample(0, 0);
       }
     } else {
@@ -90,13 +91,11 @@ class MouseReverb : public IMouseFx {
 
   void deinit() {}
 
-  void process_mouse_report(ha_mouse_report_t const *report,
-                            uint32_t time_ms) {
+  void process_mouse_report(ha_mouse_report_t const *report, uint32_t time_ms) {
     last_sample_time_ms = time_ms;
     current_velocity = 1.0;
     last_buttons = report->buttons;
     add_sample(report->x, report->y);
-    log_line("m samp %d, %d", report->x, report->y);
     send_mouse_report(report->buttons, report->x, report->y, report->wheel, 0);
   }
 };

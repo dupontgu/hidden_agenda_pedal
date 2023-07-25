@@ -46,7 +46,7 @@ class MouseFuzz : public IMouseFx {
   void initialize(uint32_t time_ms, float param_percentage) {
     (void)time_ms;
     (void)param_percentage;
-    log_line("m fuzz init");
+    log_line("Mouse fuzz/filter initialized");
   }
 
   uint32_t get_current_pixel_value(uint32_t time_ms) {
@@ -94,8 +94,7 @@ class MouseFuzz : public IMouseFx {
                       report->pan);
   }
 
-  void process_mouse_report(ha_mouse_report_t const *report,
-                            uint32_t time_ms) {
+  void process_mouse_report(ha_mouse_report_t const *report, uint32_t time_ms) {
     last_mouse_report_time = time_ms;
     if (add_noise) {
       process_with_noise(report, time_ms);

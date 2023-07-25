@@ -26,6 +26,7 @@ class MouseLooper : public IMouseFx {
     (void)time_ms;
     loop_playback_start_time_ms = 0;
     update_parameter(param_percentage);
+    log_line("Mouse looper initialized");
   }
 
   uint32_t get_current_pixel_value(uint32_t time_ms) {
@@ -59,15 +60,13 @@ class MouseLooper : public IMouseFx {
 
   void deinit() {}
 
-  void process_mouse_report(ha_mouse_report_t const *report,
-                            uint32_t time_ms) {
+  void process_mouse_report(ha_mouse_report_t const *report, uint32_t time_ms) {
     bool recording_btn_held = (report->buttons & 0b10) > 0;
     latest_buttons_minus_right = report->buttons & 0b11111101;
     if (record_start_time_ms == 0 && recording_btn_held) {
       record_start_time_ms = time_ms;
       buf_index = 0;
       loop_len = 0;
-      log_line("recording started");
     } else if (record_start_time_ms > 0 && !recording_btn_held) {
       record_start_time_ms = 0;
       loop_playback_start_time_ms = time_ms;
@@ -75,7 +74,6 @@ class MouseLooper : public IMouseFx {
       // after recording finishes, always start at 1X playback until user
       // touches knob
       direction = 1.0f / MOUSE_LOOP_MAX_SPEED;
-      log_line("recording finished: %d", loop_len);
     }
 
     if (record_start_time_ms > 0) {

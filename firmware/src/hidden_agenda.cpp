@@ -270,8 +270,8 @@ void send_mouse_report(uint8_t buttons, int8_t x, int8_t y, int8_t wheel,
 void send_keyboard_report(uint8_t modifier, uint8_t reserved,
                           const uint8_t keycode[6]) {
   (void)reserved;
-  log_line("k report %u %u %u %u %u %u", keycode[0], keycode[1], keycode[2],
-           keycode[3], keycode[4], keycode[5]);
+  // log_line("k report %u %u %u %u %u %u", keycode[0], keycode[1], keycode[2],
+  //          keycode[3], keycode[4], keycode[5]);
   tud_hid_keyboard_report(REPORT_ID_KEYBOARD, modifier, (uint8_t*)keycode);
 }
 
