@@ -1,3 +1,8 @@
+/**
+ * adapted from:
+ * https://github.com/sekigon-gonnoc/Pico-PIO-USB/blob/main/examples/host_hid_to_device_cdc/usb_descriptors.c
+ */
+
 /* 
  * The MIT License (MIT)
  *

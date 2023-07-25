@@ -1,3 +1,8 @@
+/**
+ * adapted from:
+ * https://github.com/hathach/tinyusb/blob/master/examples/device/hid_composite/src/usb_descriptors.h
+ */
+
 /* 
  * The MIT License (MIT)
  *
