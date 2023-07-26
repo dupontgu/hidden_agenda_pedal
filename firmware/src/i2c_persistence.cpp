@@ -19,8 +19,8 @@ static settings_t default_settings = {
     .version = 1,
     .active_fx_slot = 0,
     .report_parse_mode = 0,
-    .log_mode = PERSISTENCE_LOG_OFF,
-    .led_brightness = 1.0,
+    .flags = FLAG_FLASHING_ENABLED,
+    .led_brightness = 0.7,
     .slot_colors = {0xFFFF4000, 0xFF4000FF, 0xFF00FF40, 0xFFAA0070}};
 
 settings_t active_settings = default_settings;

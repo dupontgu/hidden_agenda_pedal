@@ -23,6 +23,7 @@ void assert(std::string msg, bool b) {
 void test_repl() {
     std::cout << "start test_repl..." << std::endl;
     InMemoryPersistence p;
+    p.initialize();
     Repl repl(&p);
 
     // JUNK
@@ -54,11 +55,18 @@ void test_repl() {
     assert("reboot should have been hit once", reboot_count == 1);
 
     //LOGS
-    assert("raw logging should initially be off", !p.getRawHidLogsEnabled());
+    assert("raw logging should initially be off", !p.areRawHidLogsEnabled());
     repl.process(input("cmd:raw_hid:on"));
-    assert("raw logging should be enabled", p.getRawHidLogsEnabled());
+    assert("raw logging should be enabled", p.areRawHidLogsEnabled());
     repl.process(input("cmd:raw_hid:off"));
-    assert("raw logging should be disabled", !p.getRawHidLogsEnabled());
+    assert("raw logging should be disabled", !p.areRawHidLogsEnabled());
+
+    //LED FLASHING
+    assert("flashing should initially be on", p.isFlashingEnabled());
+    repl.process(input("cmd:flash:off"));
+    assert("flashing should be disabled", !p.isFlashingEnabled());
+    repl.process(input("cmd:flash:on"));
+    assert("flashing should be enabled", p.isFlashingEnabled());
 
     //COLORS
     assert("second led color should initially be 0", p.getLedColor(1) == 0);

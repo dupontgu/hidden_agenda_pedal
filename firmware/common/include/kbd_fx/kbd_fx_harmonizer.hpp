@@ -7,6 +7,9 @@ class KeyboardHarmonizer : public IKeyboardFx {
   uint8_t report_code_buffer[REPORT_KEYCODE_COUNT] = {0};
   uint8_t harmony_offset = 1;
   uint8_t harmonics = 0;
+  uint8_t led_flash_count = 0;
+  uint32_t last_flash_time = 0;
+  float led_brightness = 0.3;
 
   int8_t index_of(uint8_t keycode, const uint8_t* array) {
     uint8_t n = sizeof(array);
@@ -26,20 +29,35 @@ class KeyboardHarmonizer : public IKeyboardFx {
   void initialize(uint32_t time_ms, float param_percentage) {
     (void)time_ms;
     (void)param_percentage;
-    log_line("k harm init %u", 1);
     update_parameter(param_percentage);
+    log_line("Keyboard harmony initialized");
   }
 
   uint32_t get_current_pixel_value(uint32_t time_ms) {
-    (void)time_ms;
-    return indicator_color;
+    if (led_flash_count == 0 || time_ms - last_flash_time < 32) {
+      return color_at_brightness(indicator_color, led_brightness);
+    }
+    last_flash_time = time_ms;
+    led_flash_count--;
+    if (led_flash_count & 1) {
+      return color_at_brightness(indicator_color, 0.1f);
+    } else {
+      return color_at_brightness(indicator_color, 0.8f);
+    }
   }
 
   void update_parameter(float percentage) {
     uint8_t raw_percentage = (uint8_t)(percentage * 98.0);
     harmony_offset = raw_percentage % 33;
+    uint8_t last_harmonic_value = harmonics;
     harmonics = raw_percentage / 33;
-    log_line("harm %u %u", harmony_offset, harmonics);
+    // if we cross into a new zone, defined by the number of harmonics, flash to
+    // let user know
+    if (last_harmonic_value != harmonics) {
+      led_flash_count = (2 * harmonics) + 2;
+      log_line("Keyboard harmonics: %u", harmonics);
+    }
+    led_brightness = (((float)harmony_offset / 33.0) * 0.8) + 0.05;
   }
 
   void tick(uint32_t time_ms) { (void)time_ms; }
@@ -74,12 +92,18 @@ class KeyboardHarmonizer : public IKeyboardFx {
       uint8_t pressed_key = pressed_keys[i];
       if (pressed_key > 0) {
         if (harmonics == 0) {
+          // execute one key press
           report_code_buffer[j++] = pressed_key + harmony_offset;
+          led_flash_count = 3;
         } else {
+          // execute two keys
+          led_flash_count = 5;
           report_code_buffer[j++] = pressed_key;
           report_code_buffer[j++] = pressed_key + harmony_offset;
+          // execute three keys
           if (harmonics == 2) {
             report_code_buffer[j++] = pressed_key + (harmony_offset * 2);
+            led_flash_count = 7;
           }
         }
       }

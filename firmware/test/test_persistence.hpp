@@ -3,7 +3,7 @@
 class InMemoryPersistence : public IPersistence {
  public:
   InMemoryPersistence() {}
-  void initialize() {}
+  void initialize() { resetToDefaults(); }
   uint8_t getVersion() { return 1; }
   void setActiveFxSlot(uint8_t slot) { active_slot = slot; }
   uint8_t getActiveFxSlot() { return active_slot; }
@@ -14,11 +14,14 @@ class InMemoryPersistence : public IPersistence {
   void setLedColor(uint8_t slot, uint32_t color) { slots[slot] = color; }
   uint32_t getLedColor(uint8_t slot) { return slots[slot]; }
   void setRawHidLogsEnabled(bool enabled) { raw_hid_logs_enabled = enabled; }
-  bool getRawHidLogsEnabled() { return raw_hid_logs_enabled; }
+  bool areRawHidLogsEnabled() { return raw_hid_logs_enabled; }
+  void setFlashingEnabled(bool enabled) { flashing_enabled = enabled; }
+  bool isFlashingEnabled() { return flashing_enabled; }
   void resetToDefaults() {
     active_slot = 0;
     report_mode = 0;
     raw_hid_logs_enabled = false;
+    flashing_enabled = true;
     led_brightness = 0.0f;
     slots[0] = 0;
     slots[1] = 0;
@@ -30,6 +33,7 @@ class InMemoryPersistence : public IPersistence {
   uint8_t active_slot;
   uint8_t report_mode;
   bool raw_hid_logs_enabled;
+  bool flashing_enabled;
   float led_brightness;
   uint32_t slots[4] = {0, 0, 0, 0};
 };

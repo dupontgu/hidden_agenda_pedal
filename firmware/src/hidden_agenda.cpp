@@ -289,8 +289,8 @@ void led_task(uint32_t time_ms) {
   uint32_t color = 0;
   uint8_t active_fx_slot = settings.getActiveFxSlot();
   if (active_sw_mode == SW_MODE_SET) {
-    // blink
-    if (frame % 20 > 10) {
+    // blink if flashing is enabled
+    if (frame % 20 > 10 && settings.isFlashingEnabled()) {
       color = 0;
     } else if (active_device_type == HID_ITF_PROTOCOL_KEYBOARD) {
       color = keyboard_fx[active_fx_slot]->get_indicator_color();
@@ -298,10 +298,14 @@ void led_task(uint32_t time_ms) {
       color = mouse_fx[active_fx_slot]->get_indicator_color();
     }
   } else if (fx_enabled) {
+    IFx* fx = mouse_fx[active_fx_slot];
     if (active_device_type == HID_ITF_PROTOCOL_KEYBOARD) {
-      color = keyboard_fx[active_fx_slot]->get_current_pixel_value(time_ms);
+      fx = keyboard_fx[active_fx_slot];
+    }
+    if (settings.isFlashingEnabled()) {
+      color = fx->get_current_pixel_value(time_ms);
     } else {
-      color = mouse_fx[active_fx_slot]->get_current_pixel_value(time_ms);
+      color = fx->get_indicator_color();
     }
   }
   set_pixel(color_at_brightness(color, settings.getLedBrightness()));
@@ -457,7 +461,7 @@ static void process_mouse_report(uint8_t dev_addr,
 void tuh_hid_report_received_cb(uint8_t dev_addr, uint8_t instance,
                                 uint8_t const* report, uint16_t len) {
   static char hid_log_buff[128];
-  if (settings.getRawHidLogsEnabled()) {
+  if (settings.areRawHidLogsEnabled()) {
     size_t log_i = sprintf(hid_log_buff, "hid:");
     for (size_t i = 0; i < len; i++) {
       log_i += sprintf(hid_log_buff + log_i, " %02x", report[i]);

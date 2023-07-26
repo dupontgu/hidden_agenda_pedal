@@ -75,6 +75,18 @@ void Repl::process(char* input) {
     }
     consumed = true;
     // check for setting of LED color
+  } else if (i >= 2 && strcmp(slots[1], "flash") == 0 && slots[2]) {
+    if (strcmp(slots[2], "on") == 0) {
+      persistence->setFlashingEnabled(true);
+      log_line("led flashing enabled");
+    } else if (strcmp(slots[2], "off") == 0) {
+      persistence->setFlashingEnabled(false);
+      log_line("led flashing disabled");
+    } else {
+      log_line("invalid input, usage: cmd:flash:[on|off]");
+    }
+    consumed = true;
+    // check for setting of LED color
   } else if (i >= 3 && strcmp(slots[1], "set_color") == 0 && slots[2] &&
              slots[3]) {
     int slot = atoi(slots[2]);

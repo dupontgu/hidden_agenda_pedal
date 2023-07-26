@@ -59,10 +59,8 @@ class MouseFuzz : public IMouseFx {
     add_noise = percentage > 0.5f;
     if (add_noise) {
       noise_param = (percentage - 0.5f) * 2;
-      log_line("noise param %f", noise_param);
     } else {
       filter_param = 1.0f - (percentage * 2.0f);
-      log_line("filter param %f", filter_param);
     }
   }
 
