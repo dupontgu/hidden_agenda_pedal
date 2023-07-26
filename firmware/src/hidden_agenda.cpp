@@ -36,6 +36,7 @@
 #include "kbd_fx/kbd_fx_harmonizer.hpp"
 #include "kbd_fx/kbd_fx_passthrough.hpp"
 #include "kbd_fx/kbd_fx_tremolo.hpp"
+#include "kbd_fx/kbd_fx_xover.hpp"
 #include "mouse_fx/mouse_fx_fuzz.hpp"
 #include "mouse_fx/mouse_fx_looper.hpp"
 #include "mouse_fx/mouse_fx_passthrough.hpp"
@@ -91,6 +92,7 @@ MousePassthrough mouse_passthrough;
 MouseReverb mouse_reverb;
 MouseXOver mouse_xover;
 KeyboardTremolo keyboard_tremolo;
+KeyboardXOver keyboard_xover;
 KeyboardPassthrough keyboard_passthrough;
 KeyboardDelay keyboard_delay;
 KeyboardHarmonizer keyboard_harmonizer;
@@ -98,9 +100,9 @@ KeyboardHarmonizer keyboard_harmonizer;
 // when pedal is "off"
 static IMouseFx* mouse_fx[] = {&mouse_looper, &mouse_reverb, &mouse_fuzz,
                                &mouse_xover, &mouse_passthrough};
-static IKeyboardFx* keyboard_fx[] = {
-    &keyboard_delay, &keyboard_tremolo, &keyboard_harmonizer,
-    &keyboard_passthrough, &keyboard_passthrough};
+static IKeyboardFx* keyboard_fx[] = {&keyboard_delay, &keyboard_tremolo,
+                                     &keyboard_harmonizer, &keyboard_xover,
+                                     &keyboard_passthrough};
 static uint8_t active_device_type = HID_ITF_PROTOCOL_KEYBOARD;
 static bool fx_enabled = false;
 static uint8_t active_sw_mode = SW_MODE_SET;

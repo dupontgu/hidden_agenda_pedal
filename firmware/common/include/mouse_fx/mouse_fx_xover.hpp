@@ -2,20 +2,6 @@
 
 #define MOUSE_XOVER_THROTTLE_MAX 13000
 
-// Should match
-// https://github.com/hathach/tinyusb/blob/master/src/class/hid/hid.h
-#ifndef HID_KEY_A
-#define HID_KEY_A 0x04
-#define HID_KEY_0 0x27
-#define HID_KEY_MINUS 0x2D
-#define HID_KEY_SLASH 0x38
-#define HID_KEY_BACKSPACE 0x2A
-#define HID_KEY_ARROW_RIGHT 0x4F
-#define HID_KEY_ARROW_LEFT 0x50
-#define HID_KEY_SPACE 0x2C
-#define HID_KEY_ENTER 0x28
-#endif
-
 class MouseXOver : public IMouseFx {
  private:
   enum State {
