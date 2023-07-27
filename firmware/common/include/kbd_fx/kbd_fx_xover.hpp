@@ -62,6 +62,7 @@ class KeyboardXOver : public IKeyboardFx {
     (void)time_ms;
     static int8_t last_x = 0;
     static int8_t last_y = 0;
+    static bool sent_modifier_keys;
     int8_t x = 0, y = 0;
     uint8_t buttons = 0;
     uint8_t override_buttons_count = REPORT_KEYCODE_COUNT;
@@ -102,5 +103,11 @@ class KeyboardXOver : public IKeyboardFx {
     // if we're holding an arrow key, we want to keep sending the same message
     // as long as its held
     mouse_override = override_buttons_count > 0;
+
+    if (report->modifier || sent_modifier_keys) {
+      const uint8_t dummy_keys[6] = {0, 0, 0, 0, 0, 0};
+      send_keyboard_report(report->modifier, report->reserved, dummy_keys);
+      sent_modifier_keys = !sent_modifier_keys;
+    }
   }
 };

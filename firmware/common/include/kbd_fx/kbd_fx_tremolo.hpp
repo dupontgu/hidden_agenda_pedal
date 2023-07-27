@@ -21,8 +21,8 @@ class KeyboardTremolo : public IKeyboardFx {
 
   void initialize(uint32_t time_ms, float param_percentage) {
     (void)time_ms;
-    (void)param_percentage;
-    log_line("k trm init %u", 1);
+    update_parameter(param_percentage);
+    log_line("Keyboard tremolo initialized");
   }
 
   uint32_t get_current_pixel_value(uint32_t time_ms) {
