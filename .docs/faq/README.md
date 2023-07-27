@@ -5,7 +5,7 @@
 If you have a standard USB keyboard or mouse, it _should_ work, but I make **no** promises. USB is complicated, and this is not my full time job. I have tested with as many mice/keebs as I could get my hands on, but I will not be buying any more to test with. It's just not practical. If you find yourself with one of these pedals and are seeing weird behavior, please email me or create a GitHub issue here and provide as much info as you can. Again - I make no promises, but if I can find time to help debug I will.
 
 ### `Can I customize the pedal?`
-* Out of the "box", there are a few settings you can change using the [`REPL`](TODO). I am open to adding more configurable settings, so feel free to leave suggestions!
+* Out of the "box", there are a few settings you can change using the [`serial console`](../usage/README.md#the-serial-console). I am open to adding more configurable settings, so feel free to leave suggestions!
 * If you want to add/change effects (and are comfy with C/C++), the fx [base classes](../../firmware/common/include/custom_hid.hpp) and simple [passthrough](../../firmware/common/include/mouse_fx/mouse_fx_passthrough.hpp) implementations are a good starting point.
 * You can also load [CircuitPython](../../circuitpython/) onto the pedal and use it as a MIDI controller.
 
