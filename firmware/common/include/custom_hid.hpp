@@ -42,7 +42,6 @@ typedef struct TU_ATTR_PACKED {
 // IMPORTANT!!! should be identical to hid_keyboard_report_t:
 // https://github.com/hathach/tinyusb/blob/master/src/class/hid/hid.h
 // WE ARE DOING SOME DANGEROUS CASTING :)
-
 typedef struct TU_ATTR_PACKED {
   uint8_t modifier;   /**< Keyboard modifier (KEYBOARD_MODIFIER_* masks). */
   uint8_t reserved;   /**< Reserved for OEM use, always set to 0. */

@@ -1,3 +1,5 @@
+#include <algorithm>
+
 #include "custom_hid.hpp"
 
 #define MOUSE_LOOP_BUFFER_SIZE 4096
@@ -17,7 +19,6 @@ class MouseLooper : public IMouseFx {
   uint32_t loop_playback_start_time_ms;
   uint8_t latest_buttons_minus_right;
   float direction;
-  float brightness;
 
  public:
   MouseLooper() {}
@@ -31,11 +32,25 @@ class MouseLooper : public IMouseFx {
 
   uint32_t get_current_pixel_value(uint32_t time_ms) {
     (void)time_ms;
-    return color_at_brightness(indicator_color, brightness);
+    if (record_start_time_ms > 0) {
+      bool flash = time_ms % 50 >= 25;
+      float flash_brightness = flash ? 0.9f : 0.2f;
+      return color_at_brightness(indicator_color, flash_brightness);
+    }
+    if (loop_len == 0) {
+      return color_at_brightness(indicator_color, 0.2f);
+    }
+
+    // either brighten or fade as the loop progresses, depending on direction
+    float progress =
+        std::max(0.2f, powf((float)buf_index / (float)loop_len, 1.5f));
+    if (direction < 0.0) {
+      progress = 1.0f - progress;
+    }
+    return color_at_brightness(indicator_color, progress);
   }
 
   void update_parameter(float percentage) {
-    brightness = percentage;
     direction = (percentage * 2.0f) - 1.0f;
   }
 
