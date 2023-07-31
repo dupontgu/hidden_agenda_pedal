@@ -474,6 +474,8 @@ void tuh_hid_report_received_cb(uint8_t dev_addr, uint8_t instance,
   uint8_t itf_protocol = HID_ITF_PROTOCOL_NONE;
   uint8_t const* report_offset = report;
 
+  // HANDLE COMBINATION MOUSE/KEYBOARDS
+  // I HAVE NO IDEA HOW UNIVERSAL THIS IS!
   if (hid_info[instance].report_count > 2) {
     // we know this is a composite report, so extract the id and start the
     // reading the data one byte over

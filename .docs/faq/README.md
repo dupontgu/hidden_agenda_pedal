@@ -4,6 +4,16 @@
 ### `Will it work with *my* keyboard or mouse?`
 If you have a standard USB keyboard or mouse, it _should_ work, but I make **no** promises. USB is complicated, and this is not my full time job. I have tested with as many mice/keebs as I could get my hands on, but I will not be buying any more to test with. It's just not practical. If you find yourself with one of these pedals and are seeing weird behavior, please email me or create a GitHub issue here and provide as much info as you can. Again - I make no promises, but if I can find time to help debug I will.
 
+### `Will it work with a USB hub?`
+In _theory_, yes, with caveats. **I have not tried this yet, so absolutely no guarentees!**
+* The output current provided by the USB-A port is limited by a resettable fuse. The limit is not very high. If you're going to try a hub, use a powered one.
+* You can only have one FX slot selected, for both keyboard AND mouse. So if you have both devices connected, and you want to use the mouse effect in slot 1, you have no choice but to use the keyboard effect in slot 1 simultaneously.
+* Similarly, both effects are either engaged or disengaged at the same time, and the parameter value provided by the knob will be the same for both effects as well.
+
+### `Can I use a combination keyboard/mouse?`
+* See all the points for the [USB hub question](#will-it-work-with-a-usb-hub) above!
+* I actually have had luck with one of these cheap wireless devices from MicroCenter. Both keyboard and mouse work fine. HOWEVER! The USB HID reports are a bit different from those provided from plain old keyboards/mice. There is a [chunk of code](../../firmware/src/hidden_agenda.cpp#L477) that handles the difference, but I truly have no idea if other combination devices will send the data in a similar manner. Give it a try! If things act weird, let me know in a GitHub issue. But please don't say I didn't warn you, and I make no promises in terms of providing a fix.
+
 ### `Can I customize the pedal?`
 * Out of the "box", there are a few settings you can change using the [`serial console`](../usage/README.md#the-serial-console). I am open to adding more configurable settings, so feel free to leave suggestions!
 * If you want to add/change effects (and are comfy with C/C++), the fx [base classes](../../firmware/common/include/custom_hid.hpp) and simple [passthrough](../../firmware/common/include/mouse_fx/mouse_fx_passthrough.hpp) implementations are a good starting point.
