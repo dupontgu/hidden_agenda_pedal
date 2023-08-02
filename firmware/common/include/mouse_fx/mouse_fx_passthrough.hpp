@@ -10,7 +10,6 @@ class MousePassthrough : public IMouseFx {
   void initialize(uint32_t time_ms, float param_percentage) {
     (void)time_ms;
     (void)param_percentage;
-    log_line("Mouse Passthrough initialized");
   }
 
   uint32_t get_current_pixel_value(uint32_t time_ms) {

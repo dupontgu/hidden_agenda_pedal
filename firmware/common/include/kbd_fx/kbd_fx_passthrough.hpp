@@ -7,7 +7,6 @@ class KeyboardPassthrough : public IKeyboardFx {
   void initialize(uint32_t time_ms, float param_percentage) {
     (void)time_ms;
     (void)param_percentage;
-    log_line("k pass init");
   }
 
   uint32_t get_current_pixel_value(uint32_t time_ms) {

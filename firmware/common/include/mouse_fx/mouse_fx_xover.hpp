@@ -22,6 +22,7 @@ class MouseXOver : public IMouseFx {
   void initialize(uint32_t time_ms, float param_percentage) {
     (void)time_ms;
     update_parameter(param_percentage);
+    log_line("Mouse crossover initialized");
   }
 
   uint32_t get_current_pixel_value(uint32_t time_ms) {
@@ -36,7 +37,7 @@ class MouseXOver : public IMouseFx {
   }
 
   void tick(uint32_t time_ms) {
-    (void) time_ms;
+    (void)time_ms;
     static uint16_t out_count = 0;
     static uint8_t key_buf[6] = {0, 0, 0, 0, 0, 0};
     if (out_count++ < 16000 - throttle) {
@@ -66,11 +67,15 @@ class MouseXOver : public IMouseFx {
   void process_mouse_report(ha_mouse_report_t const *report, uint32_t time_ms) {
     (void)time_ms;
     static bool left_button_last_pressed = false;
+    static bool right_button_last_pressed = false;
+    bool right_button_pressed = report->buttons & 0b10;
 
     // if user presses right key, move to the next character
-    if (report->buttons & 0b10) {
+    if (!right_button_pressed && right_button_last_pressed) {
       skip_backspace = true;
     }
+
+    right_button_last_pressed = right_button_pressed;
 
     if (state != idle) return;
 
@@ -105,6 +110,10 @@ class MouseXOver : public IMouseFx {
       left_button_last_pressed = false;
     }
 
+    // dont move unless holding button
+    if (!right_button_pressed && report->wheel == 0) return;
+
+    uint8_t last_key = current_key;
     if (report->wheel < 0 || report->y < -1) {
       current_key--;
       state = skip_backspace ? key_press : backspace_press;
@@ -116,10 +125,8 @@ class MouseXOver : public IMouseFx {
     // this is stupid, just hardcode an array of valid values
     if (current_key < HID_KEY_A) {
       current_key = HID_KEY_SLASH;
-    } else if (current_key == HID_KEY_0 + 1) {
-      current_key = HID_KEY_MINUS;
-    } else if (current_key == HID_KEY_MINUS - 1) {
-      current_key = HID_KEY_0;
+    } else if (current_key > HID_KEY_0 && current_key < HID_KEY_MINUS) {
+      current_key = last_key < current_key ? HID_KEY_MINUS : HID_KEY_0;
     } else if (current_key > HID_KEY_SLASH) {
       current_key = HID_KEY_A;
     }
