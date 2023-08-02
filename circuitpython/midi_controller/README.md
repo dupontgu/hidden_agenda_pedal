@@ -9,7 +9,7 @@ The MIDI controller firmware was implemented in [CircuitPython](https://www.circ
 3. Download the `code.py` file from this directory.
 4. Unscrew and remove the bottem panel of your pedal.
 5. Plug the pedal into your computer using the USB-C port.
-6. Press and release the "Boot" button on the inside (bottom) of the pedal.
+6. Press and release the "Boot" button on the inside (bottom) of the pedal. You'll need to unscrew/remove the bottom panel.
 7. Observe that the pedal is now mounted as a disk drive on your computer (It will likely be called `RPI-RP2`).
 8. Drag/drop the UF2 file you downloaded in step 1 onto the new disk drive. The pedal should reboot and remount as a drive called `CIRCUITPY`.
 9. Drag/drop the entire `adafruit_midi` directory from the `lib` directory of the Adafruit MIDI library (step 2) to the `lib` directory on `CIRCUITPY`.

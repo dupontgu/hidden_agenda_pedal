@@ -55,11 +55,26 @@ In an effort to try to make the device more accessible/less annoying, many of th
 * Change the overall brightness of the LED (this will affect color accuracy).
 * Disable all blinking/fading/patterns (the LED will either be on or off depending on state).
 
+### `Boot Button (update/modify the firmware)`
+If you want to update the pedal's firmware, upload your own, or explore alternative usages ([such as using it as a MIDI Controller!](../../circuitpython/midi_controller/)), you'll need to use the `boot` button. This button places the pedal into UF2 bootloader mode, which means you can drag and drop a `.uf2` firmware file compiled for the [RP2040 microcontroller](https://en.wikipedia.org/wiki/RP2040) onto it via USB. To find the latest "official" firmware, check out the [releases](https://github.com/dupontgu/hidden_agenda_pedal/releases) page of this repository. To load the firmware:
+
+1. Plug the pedal into your computer using the USB-C port.
+2. Flip the pedal over and unscrew/remove the bottom panel.
+3. Press the "boot" button on the bottom of the circuit board inside the pedal.
+4. Observe that a new disk drive has mounted to your computer, likely called: `RPI-RP2`.
+5. Drag and drop your new `.uf2` file onto the drive. When it's done uploading, the pedal will restart with the new firmware running.
+
+#### Additional Notes (Advanced)
+* If you want to build your own custom firmware, check out the [hardware docs](../../hardware/) to figure out which pins are being used for what.
+* If you don't want to take the back cover off, you can use the [seraial console's boot command](#boot) to programmatically place the pedal into bootloader mode.
+* **The `boot` button is NOT hardwared to the RP2040's `BOOTSEL` pin! It is hooked up to a GPIO pin and resetting the RP2040 using a [software call](../../firmware/src/hidden_agenda.cpp#L233)! If you do write custom firmware, you will have to manually copy this functionality.**
+* In case you forget to handle ^^, there is a hardwired `BOOTSEL` button on the _top_ of the circuit board. It is on the XIAO module, labeled: `B`. Hold it while power-cycling the board to enter bootloader mode.
+
 
 ## The Serial Console
-In addition to acting as a USB keyboard/house, the Hidden Agenda can act as a USB serial device. You can connect to the serial console using a terminal application of your choosing. While connected, the pedal will emit log messages and can receive commands to change certain settings. 
+In addition to acting as a USB keyboard/house, the Hidden Agenda can act as a USB serial device. You can connect to the serial console using a terminal application on your computer. While connected, the pedal will emit log messages and can receive commands to change certain settings. 
 
-If you don't know how to talk to a USB serial device, I highly recommend Adafruit's tutorials for [Windows](https://learn.adafruit.com/welcome-to-circuitpython/advanced-serial-console-on-windows), [macOS](https://learn.adafruit.com/welcome-to-circuitpython/advanced-serial-console-on-mac-and-linux), and [Linux](https://learn.adafruit.com/welcome-to-circuitpython/advanced-serial-console-on-linux). Ensure that your pedal is plugged into your computer using the USB-C port before attempting to connect!
+If you don't know how to "talk" to a USB serial device, I highly recommend Adafruit's tutorials for [Windows](https://learn.adafruit.com/welcome-to-circuitpython/advanced-serial-console-on-windows), [macOS](https://learn.adafruit.com/welcome-to-circuitpython/advanced-serial-console-on-mac-and-linux), and [Linux](https://learn.adafruit.com/welcome-to-circuitpython/advanced-serial-console-on-linux). Ensure that your pedal is plugged into your computer using the USB-C port before attempting to connect!
 
 
 All supported commands are documented below. Each command is sent to the device by first typing `cmd:`, then the name of the setting you are trying to change, then the value(s) you'd like to set, then hitting enter. The items should be separated by colons.
