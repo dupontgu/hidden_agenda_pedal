@@ -11,6 +11,10 @@ _Most_ of the BOM is available in a [DigiKey parts list](https://www.digikey.com
 [knob cap](https://guitarpedalparts.com/products/small-fluted-knob-clear) on [GuitarPedalParts.com](https://guitarpedalparts.com/)
 * For the LED, I use the [WS2812D-F5](https://datasheet.lcsc.com/lcsc/2204181500_Worldsemi-WS2812D-F5_C190565.pdf), which runs on 3.3V power and logic. These are easily sourced on eBay/AliExpress.
 
+## USB Jack Caps
+
+The [USB Jack Caps](./usb_caps_v6.stl) are 3D printed. I use a black, recycled PETG. They push into the side holes on the pedal and stabilize the USB ports (the whole PCB, really). They screw directly into the threaded inserts on the PCB using standard 8mm M3 screws.
+
 ## Assembly Notes
 
 * All components are through-hole except for the XIAO RP2040 module.
