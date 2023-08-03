@@ -11,6 +11,15 @@ _Most_ of the BOM is available in a [DigiKey parts list](https://www.digikey.com
 [knob cap](https://guitarpedalparts.com/products/small-fluted-knob-clear) on [GuitarPedalParts.com](https://guitarpedalparts.com/)
 * For the LED, I use the [WS2812D-F5](https://datasheet.lcsc.com/lcsc/2204181500_Worldsemi-WS2812D-F5_C190565.pdf), which runs on 3.3V power and logic. These are easily sourced on eBay/AliExpress.
 
+## Assembly Notes
+
+* All components are through-hole except for the XIAO RP2040 module.
+* The boot button should be installed on the _bottom_ of the board.
+* The threaded inserts should also be inserted and soldered from the bottom of the board. For safety, I have been taping over the holes on the top side as well.
+
+ [<img src="./pcb_assembled_top_v3.jpg" width="600"/>](./pcb_assembled_top_v3.jpg)
+ [<img src="./pcb_assembled_bottom_v3.jpg" width="600"/>](./pcb_assembled_bottom_v3.jpg)
+
 ## Schematic
 
  [<img src="./schematic_v3.jpg"/>](./schematic_v3.pdf)
