@@ -29,8 +29,8 @@ class KeyboardHarmonizer : public IKeyboardFx {
   void initialize(uint32_t time_ms, float param_percentage) {
     (void)time_ms;
     (void)param_percentage;
-    update_parameter(param_percentage);
     log_line("Keyboard harmonizer initialized");
+    update_parameter(param_percentage);
   }
 
   uint32_t get_current_pixel_value(uint32_t time_ms) {

@@ -494,7 +494,7 @@ void tuh_hid_report_received_cb(uint8_t dev_addr, uint8_t instance,
             itf_protocol = HID_ITF_PROTOCOL_KEYBOARD;
           }
         }
-        // TODO handle other usage pages, Consume Control,
+        // TODO handle other usage pages, Consumer Control, etc.
         break;
       }
     }

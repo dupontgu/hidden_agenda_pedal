@@ -1,5 +1,5 @@
 ## Using the Hidden Agenda as a MIDI Controller
-**IMPORTANT! This will overwrite the default firmware on your pedal! You will need to [reinstall](TODO) it to regain normal functionality.**
+**IMPORTANT! This will overwrite the default firmware on your pedal! You will need to [reinstall](../../.docs/usage/README.md#boot-button-updatemodify-the-firmware) it to regain normal functionality.**
 
 The MIDI controller firmware was implemented in [CircuitPython](https://www.circuitpython.org), which makes it super easy to install and customize!
 
