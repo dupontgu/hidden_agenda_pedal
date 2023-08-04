@@ -17,11 +17,14 @@ class InMemoryPersistence : public IPersistence {
   bool areRawHidLogsEnabled() { return raw_hid_logs_enabled; }
   void setFlashingEnabled(bool enabled) { flashing_enabled = enabled; }
   bool isFlashingEnabled() { return flashing_enabled; }
+  void setShouldInvertFootswitch(bool invert) { invert_footswitch = invert; }
+  bool shouldInvertFootswitch() { return invert_footswitch; }
   void resetToDefaults() {
     active_slot = 0;
     report_mode = 0;
     raw_hid_logs_enabled = false;
     flashing_enabled = true;
+    invert_footswitch = false;
     led_brightness = 0.0f;
     slots[0] = 0;
     slots[1] = 0;
@@ -34,6 +37,7 @@ class InMemoryPersistence : public IPersistence {
   uint8_t report_mode;
   bool raw_hid_logs_enabled;
   bool flashing_enabled;
+  bool invert_footswitch;
   float led_brightness;
   uint32_t slots[4] = {0, 0, 0, 0};
 };

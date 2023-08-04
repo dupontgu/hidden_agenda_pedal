@@ -114,3 +114,9 @@ All supported commands are documented below. Each command is sent to the device 
 * defaults to `off`
 * example: `cmd:raw_hid:on` (turns on HID logging - all incoming HID messages will be printed to the serial console)
 
+### `invert_foot`
+* Sets whether or not to invert the digial reading from the pin connected to the footswitch. Sometimes I wire it backwards, oops!
+* parameter: either `on` or `off`
+* defaults to `off`
+* example: `cmd:invert_foot:on` (enables the inversion of the footswitch, which should read as 0 when untouched, 1 when held down)
+

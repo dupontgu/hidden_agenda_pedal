@@ -19,6 +19,8 @@ class IPersistence {
   virtual void setFlashingEnabled(bool enabled) = 0;
   virtual bool isFlashingEnabled() = 0;
   virtual void resetToDefaults() = 0;
+  virtual bool shouldInvertFootswitch() = 0;
+  virtual void setShouldInvertFootswitch(bool invert) = 0;
   virtual ~IPersistence() = default;
 };
 #endif

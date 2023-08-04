@@ -74,6 +74,18 @@ void Repl::process(char* input) {
       log_line("invalid input, usage: cmd:raw_hid:[on|off]");
     }
     consumed = true;
+    // check for inversion of footswitch
+  } else if (i >= 2 && strcmp(slots[1], "invert_foot") == 0 && slots[2]) {
+    if (strcmp(slots[2], "on") == 0) {
+      persistence->setShouldInvertFootswitch(true);
+      log_line("footswitch inversion enabled");
+    } else if (strcmp(slots[2], "off") == 0) {
+      persistence->setShouldInvertFootswitch(false);
+      log_line("footswitch inversion disabled");
+    } else {
+      log_line("invalid input, usage: cmd:invert_foot:[on|off]");
+    }
+    consumed = true;
     // check for setting of LED color
   } else if (i >= 2 && strcmp(slots[1], "flash") == 0 && slots[2]) {
     if (strcmp(slots[2], "on") == 0) {

@@ -7,6 +7,7 @@
 #define HA_PERS_H
 #define FLAG_RAW_LOGS 0b1
 #define FLAG_FLASHING_ENABLED 0b10
+#define FLAG_INVERT_FOOTSWITCH 0b100
 
 typedef struct ha_settings {
   // VERSION ALWAYS FIRST!!
@@ -67,6 +68,11 @@ class I2cPersistence : public IPersistence {
     delegate.slot_colors[slot] = color;
     write();
   }
+  inline void setShouldInvertFootswitch(bool invert) {
+    set_bit_flag(invert, FLAG_INVERT_FOOTSWITCH);
+    write();
+  }
+  inline bool shouldInvertFootswitch() { return delegate.flags & FLAG_INVERT_FOOTSWITCH; }
   inline uint32_t getLedColor(uint8_t slot) {
     return delegate.slot_colors[slot];
   }

@@ -204,6 +204,7 @@ void update_from_pot() {
 void read_foot_switch() {
   static bool previous_foot_sw_value = 0;
   bool current_val = gpio_get(FOOT_SW_GPIO);
+  current_val = settings.shouldInvertFootswitch() ? !current_val : current_val;
   if (current_val == previous_foot_sw_value) {
     return;
   }

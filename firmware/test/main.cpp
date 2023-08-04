@@ -61,6 +61,13 @@ void test_repl() {
     repl.process(input("cmd:raw_hid:off"));
     assert("raw logging should be disabled", !p.areRawHidLogsEnabled());
 
+    //FOOTSWITCH
+    assert("footswitch inversion should initially be off", !p.shouldInvertFootswitch());
+    repl.process(input("cmd:invert_foot:on"));
+    assert("footswitch inversion should be enabled", p.shouldInvertFootswitch());
+    repl.process(input("cmd:invert_foot:off"));
+    assert("footswitch inversion should be disabled", !p.shouldInvertFootswitch());
+
     //LED FLASHING
     assert("flashing should initially be on", p.isFlashingEnabled());
     repl.process(input("cmd:flash:off"));
