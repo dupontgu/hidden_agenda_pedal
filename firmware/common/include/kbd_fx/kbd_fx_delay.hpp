@@ -5,7 +5,6 @@
 
 // this one we can change
 #define DELAY_SLOT_COUNT 6
-#define DELAY_MAX_REPEATS 15
 
 #define FLUSH_THRESHOLD_MS 20
 
@@ -91,7 +90,7 @@ class KeyboardDelay : public IKeyboardFx {
   }
 
   void update_parameter(float percentage) {
-    uint16_t int_p = std::lroundf(percentage * 100.0f);
+    uint16_t int_p = std::lroundf(percentage * 99.0f);
     switch (int_p) {
       case 0 ... 24:
         delay_ms = 100;

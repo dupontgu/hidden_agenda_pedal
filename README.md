@@ -37,14 +37,14 @@
  Record a gesture with your mouse and play it back on a loop. Hold the right mouse button down to record, move around as you please, and watch loop playback begin as soon as you release. Use the knob to adjust the playback speed of the loop. Turn it all the way up to play it at 2.5X speed, turn it all the way down to play at -2.5X (reversed!).
 
  #### `4. (Bonus) Crossover`
- Use your mouse as a keyboard! Move up/down to choose a character, left click to "type" it and move to the next.
+ Use your mouse as a keyboard! Use the scroll wheel to choose between characters, then tap the right mouse button to move on to the next. Hold the left mouse button + move left to backspace, move right to enter spaces, or move down to "hit" enter. You can also hold the right mouse button and move up/down to scroll through characters. The knob controls the speed at which the characters scroll.
 
  ### Keyboard Effects
  #### `1. Tremolo`
  Change the "volume" of your typing on a time interval. Imagine an imaginary hand pressing and releasing the shift key for you on a fixed schedule. Turn the knob up to increase the switch rate between upper/lowercase. If you turn the knob _all_ the way up, the effect will constanly force your typing to uppercase, effectively turning the pedal into a foot-powered caps lock button. If you turn the knob all the way down, the pedal will apply rANdOm/SarCaStiC case as you type.
 
  #### `2. Delay`
- Echo! (echo... echo...). This effect will repeat keystrokes on a time interval for you while it is engaged. Turn the knob up to increase both the number of repetitions and time between repetitions.
+ Echo! (echo... echo...). This effect will repeat keystrokes on a time interval for you while it is engaged. The knob is divided into 4 zones, each corresponding to a delay interval time (from left to right: short, short-ish, long-ish, long). Within each zone, the knob controls the "feedback" - AKA the number of repetitions for a given keystroke. The rightmost edge of each zone will set the delay to repeat infinitely for maximum of 6 keys.
 
  #### `3. Pitch Shift / Harmonizer`
  Maps your keystrokes to... different keystrokes. The knob is divided into 3 sections. In the lowest section, the pedal will simply replace the keys you're pressing with those which are a fixed _"distance"_ away (by their [ascii number](https://www.asciitable.com/)). So if the distance is set to 1, and you press the 'a' key, the pedal will instead type 'b'. If the distance is set to 2, pressing 'a' would yield 'c', etc. You can increase the distance between characters by turning the knob up. As soon as you turn the knob into the second section (about 10 o'clock), the behavior changes slightly. Now, instead of a "pitch shift", this becomes a "harmony" - the orignal key you pressed will be typed, _as well as_ the shifted one. In other words, pressing one key will yield two typed characters. If you turn the knob into the third section (about 2 o'clock), the pedal will type 3 characters for each key you press: your original key character, one that is `n` characters away from that one, and another that is `n` characters away from the second. Think of it as a chord! You can turn up the knob _within_ each section to increase `n`.

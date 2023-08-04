@@ -1,5 +1,7 @@
 # Hidden Agenda Usage
-**Safety note: This is a DIY project, use at your own risk! Do not plug anything other than a USB keyboard or mouse into the USB-A port. Do not use the USB-A port to charge your devices.**
+**Safety note: This is a DIY project, use at your own risk! Do not plug anything other than a USB keyboard or mouse into the USB-A port. Do not use the USB-A port to charge your devices.** 
+
+**Also - this device will perform mouse movements and keystrokes on your behalf! Exit out of any important work before using. I take no responsibility if you accidentally delete something!**
 
 ## Quick Start
 1. Plug the Hidden Agenda into your computer using the USB-C port on the left side of the pedal.
@@ -13,15 +15,15 @@
 
 The order of [effects](../../README.md#what-effects-does-it-have) (from knob all-the-way left -> all-the-way right) are:
 * Mouse
-  1. Looper
-  2. Reverb
-  3. Distortion/Filter
-  4. Crossover
+  1. ![#FF4000](https://via.placeholder.com/15/FF4000/000000?text=+) Looper
+  2. ![#4000FF](https://via.placeholder.com/15/4000FF/000000?text=+) Reverb
+  3. ![#00FF40](https://via.placeholder.com/15/00FF40/000000?text=+) Distortion/Filter
+  4. ![#AA0070](https://via.placeholder.com/15/AA0070/000000?text=+) Crossover
 * Keyboard
-  1. Delay
-  2. Tremolo
-  3. Pitch Shift / Harmonizer
-  4. Crossover
+  1. ![#FF4000](https://via.placeholder.com/15/FF4000/000000?text=+) Delay 
+  2. ![#4000FF](https://via.placeholder.com/15/4000FF/000000?text=+) Tremolo 
+  3. ![#00FF40](https://via.placeholder.com/15/00FF40/000000?text=+) Pitch Shift / Harmonizer 
+  4. ![#AA0070](https://via.placeholder.com/15/AA0070/000000?text=+) Crossover 
 
 
  [<img src="parts_label.jpg" width="500"/>](./parts_label.jpg)
