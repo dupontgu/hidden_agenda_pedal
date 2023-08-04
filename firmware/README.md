@@ -12,7 +12,7 @@
 1. Create a build directory and use `cmake` to configure the build:
     ```
     $ mkdir build && cd build
-    $ cmake ..
+    $ cmake -DPICO_BOARD=ha_board ..
     ```
 1. Run the build (you can run this step without the previous ones from here on out):
     ```

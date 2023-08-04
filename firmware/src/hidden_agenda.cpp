@@ -52,7 +52,6 @@
 #include "util.h"
 #include "ws2812.pio.h"
 
-#define PICO_XOSC_STARTUP_DELAY_MULTIPLIER 64
 #define GENERIC_DESKTOP_USAGE_PAGE 0x01
 #define USAGE_MOUSE 0x02
 #define USAGE_KEYBOARD 0x06
