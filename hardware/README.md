@@ -1,6 +1,6 @@
 # Hidden Agenda Hardware
 
-Check out an interactive version of this KiCAD project using [KiCanvas](//TODO)!!
+Check out an interactive version of this KiCAD project using [KiCanvas](https://kicanvas.org/?github=https://github.com/dupontgu/hidden_agenda_pedal/tree/main/hardware)!!
 
 ## BOM
 

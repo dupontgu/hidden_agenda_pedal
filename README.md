@@ -1,3 +1,6 @@
+# This project is not yet meant to be public shhhh!!
+Please don't publish anything about it until I iron out the final details, thank you!!
+
 # Hidden Agenda
  **A multi-effects pedal for your mouse and keyboard!**
 
