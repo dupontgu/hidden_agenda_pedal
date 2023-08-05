@@ -1,5 +1,6 @@
 set(target_name hidden_agenda)
 add_executable(${target_name})
+set_target_properties(${target_name} PROPERTIES OUTPUT_NAME "${target_name}_${GIT_HASH}")
 
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}/generated)
 pico_generate_pio_header(${target_name} ${CMAKE_CURRENT_LIST_DIR}/ws2812.pio OUTPUT_DIR ${CMAKE_CURRENT_LIST_DIR}/generated)

@@ -6,6 +6,12 @@ if(TEST)
     project(hidden_agenda_test)
     add_subdirectory(test)
 else()
+    execute_process(
+        COMMAND git log -1 --format=%h
+        WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}
+        OUTPUT_VARIABLE GIT_HASH
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+    )
     set(PICO_BOARD_HEADER_DIRS "${CMAKE_SOURCE_DIR}/src") 
     include (pico_sdk_import.cmake)
     project(hidden_agenda_project)
