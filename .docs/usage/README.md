@@ -101,7 +101,7 @@ All supported commands are documented below. Each command is sent to the device 
 * Sets whether or not the onboard LED should blink/flash/change brightness while in use, or remain static.
 * parameter: either `on` or `off`
 * defaults to `on`
-* example: `cmd:flash:off` (sets the maximum brightness to 80%)
+* example: `cmd:flash:off` (turns LED flashing off - it will glow a solid color when in FX Select mode, and while the effect is engaged)
 
 ### `set_color`
 * Sets the LED color for a given FX slot.
