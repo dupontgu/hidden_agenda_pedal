@@ -343,7 +343,7 @@ void refresh_settings() {
 }
 
 void core1_main() {
-  sleep_ms(10);
+  sleep_ms(150);
 
   // Use tuh_configure() to pass pio configuration to the host stack
   // Note: tuh_configure() must be called before
@@ -416,7 +416,7 @@ void tuh_hid_mount_cb(uint8_t dev_addr, uint8_t instance,
   log_line("%u reports", hid_info[instance].report_count);
   for (size_t i = 0; i < hid_info[instance].report_count; i++) {
     tuh_hid_report_info_t r = hid_info[instance].report_info[i];
-    log_line("id: %u, usage: %u", r.report_id, r.usage);
+    log_line("id: %u, page: %u, usage: %u", r.report_id, r.usage_page, r.usage);
   }
 
   uint16_t vid, pid;
@@ -429,9 +429,10 @@ void tuh_hid_mount_cb(uint8_t dev_addr, uint8_t instance,
   if (itf_protocol == HID_ITF_PROTOCOL_KEYBOARD ||
       itf_protocol == HID_ITF_PROTOCOL_MOUSE) {
     active_device_type = itf_protocol;
-    if (!tuh_hid_receive_report(dev_addr, instance)) {
-      log_line("Error: cannot request report");
-    }
+  }
+
+  if (!tuh_hid_receive_report(dev_addr, instance)) {
+    log_line("Error: cannot request report");
   }
 }
 
@@ -460,6 +461,26 @@ static void process_mouse_report(uint8_t dev_addr,
   mouse_fx[slot]->process_mouse_report((ha_mouse_report_t*)report, time_ms);
 }
 
+inline uint8_t get_protocol_by_report_id(uint8_t id, uint8_t instance) {
+  // find the tuh_hid_report_info_t that matches the id of the report we just
+  // received
+  for (size_t i = 0; i < hid_info[instance].report_count; i++) {
+    tuh_hid_report_info_t info = hid_info[instance].report_info[i];
+    if (info.report_id == id) {
+      if (info.usage_page == GENERIC_DESKTOP_USAGE_PAGE) {
+        if (info.usage == USAGE_MOUSE) {
+          return HID_ITF_PROTOCOL_MOUSE;
+        } else if (info.usage == USAGE_KEYBOARD) {
+          return HID_ITF_PROTOCOL_KEYBOARD;
+        }
+      }
+      // TODO handle other usage pages, Consumer Control, etc.
+      break;
+    }
+  }
+  return HID_ITF_PROTOCOL_NONE;
+}
+
 void tuh_hid_report_received_cb(uint8_t dev_addr, uint8_t instance,
                                 uint8_t const* report, uint16_t len) {
   static char hid_log_buff[128];
@@ -481,25 +502,15 @@ void tuh_hid_report_received_cb(uint8_t dev_addr, uint8_t instance,
     // reading the data one byte over
     report_offset = report + 1;
     uint8_t id = report[0];
-
-    // find the tuh_hid_report_info_t that matches the id of the report we just
-    // received
-    for (size_t i = 0; i < hid_info[instance].report_count; i++) {
-      tuh_hid_report_info_t info = hid_info[instance].report_info[i];
-      if (info.report_id == id) {
-        if (info.usage_page == GENERIC_DESKTOP_USAGE_PAGE) {
-          if (info.usage == USAGE_MOUSE) {
-            itf_protocol = HID_ITF_PROTOCOL_MOUSE;
-          } else if (info.usage == USAGE_KEYBOARD) {
-            itf_protocol = HID_ITF_PROTOCOL_KEYBOARD;
-          }
-        }
-        // TODO handle other usage pages, Consumer Control, etc.
-        break;
-      }
-    }
+    itf_protocol = get_protocol_by_report_id(id, instance);
   } else {
     itf_protocol = tuh_hid_interface_protocol(dev_addr, instance);
+    // if we still don't know the protocol, and there's only one report, try to
+    // use that as source of truth
+    if (itf_protocol == HID_ITF_PROTOCOL_NONE &&
+        hid_info[instance].report_count == 1) {
+      itf_protocol = get_protocol_by_report_id(0, instance);
+    }
   }
 
   uint32_t time_ms = MS_SINCE_BOOT;
