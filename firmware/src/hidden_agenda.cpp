@@ -97,9 +97,9 @@ KeyboardDelay keyboard_delay;
 KeyboardHarmonizer keyboard_harmonizer;
 // LAST FX (at index MAX_FX) should always be passthrough! This is what gets run
 // when pedal is "off"
-static IMouseFx* mouse_fx[] = {&mouse_looper, &mouse_reverb, &mouse_fuzz,
+static IMouseFx* mouse_fx[] = {&mouse_reverb, &mouse_looper, &mouse_fuzz,
                                &mouse_xover, &mouse_passthrough};
-static IKeyboardFx* keyboard_fx[] = {&keyboard_delay, &keyboard_tremolo,
+static IKeyboardFx* keyboard_fx[] = {&keyboard_tremolo, &keyboard_delay,
                                      &keyboard_harmonizer, &keyboard_xover,
                                      &keyboard_passthrough};
 static uint8_t active_device_type = HID_ITF_PROTOCOL_KEYBOARD;

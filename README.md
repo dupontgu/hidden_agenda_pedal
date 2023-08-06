@@ -33,11 +33,11 @@ Please don't publish anything about it until I iron out the final details, thank
  #### `1. Reverb`
  Send your cursor flying! This effect adds a bit of momentum to your mouse cursor, so when you stop moving your hand, it will keep going in the direction you were heading. When this effect is active, the knob controls the "length" of the reverb (or, how long it will take to slow down to a stop after you've stopped moving).
 
- #### `2. Distortion / Noise Filter`
- This is a two-in-one effect. Turn _up_ the knob (past halfway), and the pedal will add an increasing amount of random noise to your path of motion. Turn _down_ the knob, and the pedal will apply a low-pass filter to your motion, effectively smoothing it out. 
-
- #### `3. Looper`
+ #### `2. Looper`
  Record a gesture with your mouse and play it back on a loop. Hold the right mouse button down to record, move around as you please, and watch loop playback begin as soon as you release. Use the knob to adjust the playback speed of the loop. Turn it all the way up to play it at 2.5X speed, turn it all the way down to play at -2.5X (reversed!).
+
+ #### `3. Distortion / Noise Filter`
+ This is a two-in-one effect. Turn _up_ the knob (past halfway), and the pedal will add an increasing amount of random noise to your path of motion. Turn _down_ the knob, and the pedal will apply a low-pass filter to your motion, effectively smoothing it out. 
 
  #### `4. (Bonus) Crossover`
  Use your mouse as a keyboard! Use the scroll wheel to choose between characters, then tap the right mouse button to move on to the next. Hold the left mouse button + move left to backspace, move right to enter spaces, or move down to "hit" enter. You can also hold the right mouse button and move up/down to scroll through characters. The knob controls the speed at which the characters scroll.

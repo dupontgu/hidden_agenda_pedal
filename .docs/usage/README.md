@@ -15,13 +15,13 @@
 
 The order of [effects](../../README.md#what-effects-does-it-have) (from knob all-the-way left -> all-the-way right) are:
 * Mouse
-  1. ![#FF4000](https://via.placeholder.com/15/FF4000/000000?text=+) Looper
-  2. ![#4000FF](https://via.placeholder.com/15/4000FF/000000?text=+) Reverb
+  1. ![#FF4000](https://via.placeholder.com/15/FF4000/000000?text=+) Reverb
+  2. ![#4000FF](https://via.placeholder.com/15/4000FF/000000?text=+) Looper
   3. ![#00FF40](https://via.placeholder.com/15/00FF40/000000?text=+) Distortion/Filter
   4. ![#AA0070](https://via.placeholder.com/15/AA0070/000000?text=+) Crossover
 * Keyboard
-  1. ![#FF4000](https://via.placeholder.com/15/FF4000/000000?text=+) Delay 
-  2. ![#4000FF](https://via.placeholder.com/15/4000FF/000000?text=+) Tremolo 
+  1. ![#FF4000](https://via.placeholder.com/15/FF4000/000000?text=+) Tremolo 
+  2. ![#4000FF](https://via.placeholder.com/15/4000FF/000000?text=+) Delay 
   3. ![#00FF40](https://via.placeholder.com/15/00FF40/000000?text=+) Pitch Shift / Harmonizer 
   4. ![#AA0070](https://via.placeholder.com/15/AA0070/000000?text=+) Crossover 
 
