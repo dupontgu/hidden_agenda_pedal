@@ -56,6 +56,7 @@
 #define GENERIC_DESKTOP_USAGE_PAGE 0x01
 #define USAGE_MOUSE 0x02
 #define USAGE_KEYBOARD 0x06
+#define SYNTHESIZED_MOUSE_REPORT_INSTANCE 0xFF
 
 #define MS_SINCE_BOOT to_ms_since_boot(get_absolute_time())
 #define SOFT_BOOT_BTN_GPIO 0
@@ -451,15 +452,6 @@ static void process_mouse_report(uint8_t dev_addr,
   mouse_fx[slot]->process_mouse_report((ha_mouse_report_t*)report, time_ms);
 }
 
-// process any report that does not come from a "real" mouse.
-static void process_sidedoor_mouse_report(uint8_t buttons, int8_t x, int8_t y) {
-  static hid_mouse_report_t report;
-  report.buttons = buttons;
-  report.x = x;
-  report.y = y;
-  process_mouse_report(0xFF, &report, MS_SINCE_BOOT);
-}
-
 inline uint8_t get_protocol_by_report_id(uint8_t id, uint8_t instance) {
   // find the tuh_hid_report_info_t that matches the id of the report we just
   // received
@@ -497,16 +489,21 @@ void tuh_hid_report_received_cb(uint8_t dev_addr, uint8_t instance,
 
   uint8_t itf_protocol = HID_ITF_PROTOCOL_NONE;
   uint8_t const* report_offset = report;
+  bool used_synthesized_report = false;
 
-  // HANDLE COMBINATION MOUSE/KEYBOARDS
-  // I HAVE NO IDEA HOW UNIVERSAL THIS IS!
-  if (hid_info[instance].report_count > 2) {
+  if (instance == SYNTHESIZED_MOUSE_REPORT_INSTANCE) {
+    used_synthesized_report = true;
+    itf_protocol = HID_ITF_PROTOCOL_MOUSE;
+  } else if (hid_info[instance].report_count > 2) {
+    // HANDLE COMBINATION MOUSE/KEYBOARDS
+    // I HAVE NO IDEA HOW UNIVERSAL THIS IS!
     // we know this is a composite report, so extract the id and start the
     // reading the data one byte over
     report_offset = report + 1;
     uint8_t id = report[0];
     itf_protocol = get_protocol_by_report_id(id, instance);
   } else {
+    // TODO - can probably cache all this on mount/unmount
     itf_protocol = tuh_hid_interface_protocol(dev_addr, instance);
     // if we still don't know the protocol, and there's only one report, try to
     // use that as source of truth
@@ -532,9 +529,19 @@ void tuh_hid_report_received_cb(uint8_t dev_addr, uint8_t instance,
   }
 
   // continue to request to receive report
-  if (!tuh_hid_receive_report(dev_addr, instance)) {
+  if (!used_synthesized_report && !tuh_hid_receive_report(dev_addr, instance)) {
     log_line("Error: cannot request report");
   }
+}
+
+// process any report that does not come from a "real" mouse.
+static void process_sidedoor_mouse_report(uint8_t buttons, int8_t x, int8_t y) {
+  static hid_mouse_report_t report;
+  report.buttons = buttons;
+  report.x = x;
+  report.y = y;
+  tuh_hid_report_received_cb(0, SYNTHESIZED_MOUSE_REPORT_INSTANCE,
+                             (const uint8_t*)&report, sizeof(report));
 }
 
 void tud_cdc_rx_cb(uint8_t itf) {
