@@ -1,8 +1,10 @@
 #include "custom_hid.hpp"
+#include "hid_fx.hpp"
 
 #define PRESSED_KEYS_COUNT REPORT_KEYCODE_COUNT / 2
 
 class KeyboardHarmonizer : public IKeyboardFx {
+  using IKeyboardFx::IKeyboardFx;
   uint8_t pressed_keys[PRESSED_KEYS_COUNT] = {0};
   uint8_t report_code_buffer[REPORT_KEYCODE_COUNT] = {0};
   uint8_t harmony_offset = 1;
@@ -24,7 +26,6 @@ class KeyboardHarmonizer : public IKeyboardFx {
   inline int8_t free_slot_index() { return index_of(0, pressed_keys); }
 
  public:
-  KeyboardHarmonizer() {}
 
   void initialize(uint32_t time_ms, float param_percentage) {
     (void)time_ms;
@@ -113,7 +114,7 @@ class KeyboardHarmonizer : public IKeyboardFx {
       report_code_buffer[j] = 0;
       ++j;
     }
-    send_keyboard_report(report->modifier, report->reserved,
+    hid_output->send_keyboard_report(report->modifier, report->reserved,
                          report_code_buffer);
   }
 };

@@ -1,20 +1,20 @@
 #include <algorithm>
 
 #include "custom_hid.hpp"
+#include "hid_fx.hpp"
 
 // random velocities to send the cursor around the screen when keys are pressed
 static const int8_t skate_values[] = {-10, 12,  -18, 15,  -29, 35, -40,
                                       66,  -74, 80,  -90, 40,  -50};
 
 class KeyboardXOver : public IKeyboardFx {
+  using IKeyboardFx::IKeyboardFx;
   bool mouse_override = false;
   ha_mouse_report_t mouse_report;
   ha_mouse_report_t last_report;
   float acceleration = 1.0;
 
  public:
-  KeyboardXOver() {}
-
   void initialize(uint32_t time_ms, float param_percentage) {
     (void)time_ms;
     update_parameter(param_percentage);
@@ -43,8 +43,9 @@ class KeyboardXOver : public IKeyboardFx {
     if (mouse_override || mouse_report.x != last_report.x ||
         mouse_report.y != last_report.y ||
         mouse_report.buttons != last_report.buttons) {
-      send_mouse_report(mouse_report.buttons, mouse_report.x, mouse_report.y,
-                        mouse_report.wheel, mouse_report.pan);
+      hid_output->send_mouse_report(mouse_report.buttons, mouse_report.x,
+                                    mouse_report.y, mouse_report.wheel,
+                                    mouse_report.pan);
       last_report = mouse_report;
     }
 
@@ -106,7 +107,8 @@ class KeyboardXOver : public IKeyboardFx {
 
     if (report->modifier || sent_modifier_keys) {
       const uint8_t dummy_keys[6] = {0, 0, 0, 0, 0, 0};
-      send_keyboard_report(report->modifier, report->reserved, dummy_keys);
+      hid_output->send_keyboard_report(report->modifier, report->reserved,
+                                       dummy_keys);
       sent_modifier_keys = !sent_modifier_keys;
     }
   }

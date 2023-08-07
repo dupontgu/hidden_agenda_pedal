@@ -1,11 +1,14 @@
 #include <algorithm>
 
 #include "custom_hid.hpp"
+#include "hid_fx.hpp"
 
 #define MOUSE_LOOP_BUFFER_SIZE 4096
 #define MOUSE_LOOP_MAX_SPEED 2.5
 
 class MouseLooper : public IMouseFx {
+  using IMouseFx::IMouseFx;
+
  private:
   typedef struct sample {
     uint32_t time_ms_offset;
@@ -21,8 +24,6 @@ class MouseLooper : public IMouseFx {
   float direction;
 
  public:
-  MouseLooper() {}
-
   void initialize(uint32_t time_ms, float param_percentage) {
     (void)time_ms;
     loop_playback_start_time_ms = 0;
@@ -65,7 +66,7 @@ class MouseLooper : public IMouseFx {
     if (time_delta >= next_sample.time_ms_offset) {
       int8_t x = direction < 0.0f ? -next_sample.x : next_sample.x;
       int8_t y = direction < 0.0f ? -next_sample.y : next_sample.y;
-      send_mouse_report(latest_buttons_minus_right, x, y, 0, 0);
+      hid_output->send_mouse_report(latest_buttons_minus_right, x, y, 0, 0);
       if (++buf_index >= loop_len) {
         loop_playback_start_time_ms = time_ms;
         buf_index = 0;
@@ -98,8 +99,8 @@ class MouseLooper : public IMouseFx {
         buf_index = 0;
       }
       if (loop_len < MOUSE_LOOP_BUFFER_SIZE) loop_len++;
-      send_mouse_report(latest_buttons_minus_right, report->x, report->y,
-                        report->wheel, 0);
+      hid_output->send_mouse_report(latest_buttons_minus_right, report->x,
+                                    report->y, report->wheel, 0);
     }
   }
 };

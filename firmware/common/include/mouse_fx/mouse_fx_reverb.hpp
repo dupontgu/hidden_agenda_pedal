@@ -1,4 +1,5 @@
 #include "custom_hid.hpp"
+#include "hid_fx.hpp"
 
 #define REVERB_BUF_SIZE 18
 #define REVERB_DEBOUNCE 10
@@ -6,6 +7,8 @@
 #define MAX_VELOCITY_SCALAR 0.998
 
 class MouseReverb : public IMouseFx {
+  using IMouseFx::IMouseFx;
+
  private:
   struct vec2 {
     uint8_t x;
@@ -44,8 +47,6 @@ class MouseReverb : public IMouseFx {
   }
 
  public:
-  MouseReverb() {}
-
   void initialize(uint32_t time_ms, float param_percentage) {
     (void)time_ms;
     update_parameter(param_percentage);
@@ -85,7 +86,7 @@ class MouseReverb : public IMouseFx {
         add_sample(0, 0);
       }
     } else {
-      send_mouse_report(last_buttons, x, y, 0, 0);
+      hid_output->send_mouse_report(last_buttons, x, y, 0, 0);
     }
   }
 
@@ -96,6 +97,6 @@ class MouseReverb : public IMouseFx {
     current_velocity = 1.0;
     last_buttons = report->buttons;
     add_sample(report->x, report->y);
-    send_mouse_report(report->buttons, report->x, report->y, report->wheel, 0);
+    hid_output->send_mouse_report(report->buttons, report->x, report->y, report->wheel, 0);
   }
 };

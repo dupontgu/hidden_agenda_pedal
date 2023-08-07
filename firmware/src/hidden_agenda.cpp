@@ -47,6 +47,7 @@
 #include "pico/time.h"
 #include "pio_usb.h"
 #include "repl.hpp"
+#include "tud_hid_output.hpp"
 #include "tusb.h"
 #include "usb_descriptors.h"
 #include "util.h"
@@ -84,17 +85,18 @@ static struct {
 } hid_info[CFG_TUH_HID];
 
 I2cPersistence settings;
+TinyHIDOutput hid_output;
 Repl repl(&settings);
-MouseFuzz mouse_fuzz;
-MouseLooper mouse_looper;
-MousePassthrough mouse_passthrough;
-MouseReverb mouse_reverb;
-MouseXOver mouse_xover;
-KeyboardTremolo keyboard_tremolo;
-KeyboardXOver keyboard_xover;
-KeyboardPassthrough keyboard_passthrough;
-KeyboardDelay keyboard_delay;
-KeyboardHarmonizer keyboard_harmonizer;
+MouseFuzz mouse_fuzz(&hid_output);
+MouseLooper mouse_looper(&hid_output);
+MousePassthrough mouse_passthrough(&hid_output);
+MouseReverb mouse_reverb(&hid_output);
+MouseXOver mouse_xover(&hid_output);
+KeyboardTremolo keyboard_tremolo(&hid_output);
+KeyboardXOver keyboard_xover(&hid_output);
+KeyboardPassthrough keyboard_passthrough(&hid_output);
+KeyboardDelay keyboard_delay(&hid_output);
+KeyboardHarmonizer keyboard_harmonizer(&hid_output);
 // LAST FX (at index MAX_FX) should always be passthrough! This is what gets run
 // when pedal is "off"
 static IMouseFx* mouse_fx[] = {&mouse_reverb, &mouse_looper, &mouse_fuzz,
@@ -261,20 +263,6 @@ void init_io() {
   adc_init();
   adc_gpio_init(KNOB_ADC_GPIO);
   adc_select_input(0);
-}
-
-void send_mouse_report(uint8_t buttons, int8_t x, int8_t y, int8_t wheel,
-                       int8_t pan) {
-  // log_line("m report %d %d %d", x, y, buttons);
-  tud_hid_mouse_report(REPORT_ID_MOUSE, buttons, x, y, wheel, pan);
-}
-
-void send_keyboard_report(uint8_t modifier, uint8_t reserved,
-                          const uint8_t keycode[6]) {
-  (void)reserved;
-  // log_line("k report %u %u %u %u %u %u", keycode[0], keycode[1], keycode[2],
-  //          keycode[3], keycode[4], keycode[5]);
-  tud_hid_keyboard_report(REPORT_ID_KEYBOARD, modifier, (uint8_t*)keycode);
 }
 
 static inline void set_pixel(uint32_t pixel_grb) {
@@ -484,13 +472,17 @@ inline uint8_t get_protocol_by_report_id(uint8_t id, uint8_t instance) {
 void tuh_hid_report_received_cb(uint8_t dev_addr, uint8_t instance,
                                 uint8_t const* report, uint16_t len) {
   static char hid_log_buff[128];
+  static uint32_t last_report_time = 0;
+  uint32_t time_ms = MS_SINCE_BOOT;
   if (settings.areRawHidLogsEnabled()) {
-    size_t log_i = sprintf(hid_log_buff, "hid:");
+    size_t log_i =
+        sprintf(hid_log_buff, "Δ: %lu, hid:", time_ms - last_report_time);
     for (size_t i = 0; i < len; i++) {
       log_i += sprintf(hid_log_buff + log_i, " %02x", report[i]);
     }
     log_line((const char*)hid_log_buff);
   }
+  last_report_time = time_ms;
 
   uint8_t itf_protocol = HID_ITF_PROTOCOL_NONE;
   uint8_t const* report_offset = report;
@@ -513,7 +505,6 @@ void tuh_hid_report_received_cb(uint8_t dev_addr, uint8_t instance,
     }
   }
 
-  uint32_t time_ms = MS_SINCE_BOOT;
   switch (itf_protocol) {
     case HID_ITF_PROTOCOL_KEYBOARD:
       process_kbd_report(dev_addr, (hid_keyboard_report_t const*)report_offset,

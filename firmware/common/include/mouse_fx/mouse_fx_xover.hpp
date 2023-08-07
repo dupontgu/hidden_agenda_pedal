@@ -1,8 +1,10 @@
 #include "custom_hid.hpp"
+#include "hid_fx.hpp"
 
 #define MOUSE_XOVER_THROTTLE_MAX 13000
 
 class MouseXOver : public IMouseFx {
+  using IMouseFx::IMouseFx;
  private:
   enum State {
     idle,
@@ -17,7 +19,6 @@ class MouseXOver : public IMouseFx {
   bool skip_backspace = true;
 
  public:
-  MouseXOver() {}
 
   void initialize(uint32_t time_ms, float param_percentage) {
     (void)time_ms;
@@ -59,7 +60,7 @@ class MouseXOver : public IMouseFx {
       key_buf[0] = 0;
       state = idle;
     }
-    send_keyboard_report(0, 0, key_buf);
+    hid_output->send_keyboard_report(0, 0, key_buf);
   }
 
   void deinit() {}

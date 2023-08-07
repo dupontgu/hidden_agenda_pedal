@@ -1,18 +1,19 @@
 #include <math.h>
 
 #include "custom_hid.hpp"
+#include "hid_fx.hpp"
 
 #define SHIFT_FLAG 0b00100000
 #define DUTY_CYCLE_MAX 0xFFFF
 
 class KeyboardTremolo : public IKeyboardFx {
+  using IKeyboardFx::IKeyboardFx;
   uint32_t off_color = 0;
   uint16_t duty_cycle_ms = 0;
   bool sarcastic_mode = false;
   bool timer_engaged = false;
 
  public:
-  KeyboardTremolo() {}
 
   void set_indicator_color(uint32_t c) {
     IKeyboardFx::set_indicator_color(c);
@@ -79,7 +80,7 @@ class KeyboardTremolo : public IKeyboardFx {
       timer_engaged = (get_random_byte() & 0b01);
     }
     modifier_flag |= timer_engaged ? SHIFT_FLAG : 0;
-    send_keyboard_report(report->modifier | modifier_flag, report->reserved,
+    hid_output->send_keyboard_report(report->modifier | modifier_flag, report->reserved,
                          report->keycode);
   }
 };

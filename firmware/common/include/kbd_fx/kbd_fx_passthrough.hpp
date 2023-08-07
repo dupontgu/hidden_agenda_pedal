@@ -1,9 +1,8 @@
 #include "custom_hid.hpp"
+#include "hid_fx.hpp"
 
 class KeyboardPassthrough : public IKeyboardFx {
- public:
-  KeyboardPassthrough() {}
-
+  using IKeyboardFx::IKeyboardFx;
   void initialize(uint32_t time_ms, float param_percentage) {
     (void)time_ms;
     (void)param_percentage;
@@ -23,6 +22,7 @@ class KeyboardPassthrough : public IKeyboardFx {
   void process_keyboard_report(ha_keyboard_report_t const *report,
                                uint32_t time_ms) {
     (void)time_ms;
-    send_keyboard_report(report->modifier, report->reserved, report->keycode);
+    hid_output->send_keyboard_report(report->modifier, report->reserved,
+                                     report->keycode);
   }
 };

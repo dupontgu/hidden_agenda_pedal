@@ -2,6 +2,7 @@
 #include <cmath>
 
 #include "custom_hid.hpp"
+#include "hid_fx.hpp"
 
 // this one we can change
 #define DELAY_SLOT_COUNT 6
@@ -16,6 +17,7 @@ typedef struct {
 } delay_slot_t;
 
 class KeyboardDelay : public IKeyboardFx {
+  using IKeyboardFx::IKeyboardFx;
   ha_keyboard_report_t latest_report;
   delay_slot_t slots[DELAY_SLOT_COUNT];
   float cycle_progress = 0.0;
@@ -27,8 +29,8 @@ class KeyboardDelay : public IKeyboardFx {
   uint16_t remaining_repeats = 0;
 
   inline void resend_latest_report() {
-    send_keyboard_report(latest_report.modifier, latest_report.reserved,
-                         latest_report.keycode);
+    hid_output->send_keyboard_report(
+        latest_report.modifier, latest_report.reserved, latest_report.keycode);
   }
 
   void release_all(bool allow_blank_report) {
@@ -58,8 +60,6 @@ class KeyboardDelay : public IKeyboardFx {
   }
 
  public:
-  KeyboardDelay() {}
-
   void initialize(uint32_t time_ms, float param_percentage) {
     log_line("Keyboard delay initialized");
     update_parameter(param_percentage);
@@ -170,7 +170,8 @@ class KeyboardDelay : public IKeyboardFx {
     latest_report.modifier = report->modifier;
     latest_report.reserved = report->reserved;
     last_report_key_count = 0;
-    send_keyboard_report(report->modifier, report->reserved, report->keycode);
+    hid_output->send_keyboard_report(report->modifier, report->reserved,
+                                     report->keycode);
     for (size_t i = 0; i < REPORT_KEYCODE_COUNT; i++) {
       uint8_t code = report->keycode[i];
       latest_report.keycode[i] = code;
