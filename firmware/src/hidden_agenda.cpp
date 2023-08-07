@@ -84,9 +84,11 @@ static struct {
   tuh_hid_report_info_t report_info[MAX_REPORT];
 } hid_info[CFG_TUH_HID];
 
+static void process_sidedoor_mouse_report(uint8_t buttons, int8_t x, int8_t y);
+
 I2cPersistence settings;
-TinyHIDOutput hid_output;
-Repl repl(&settings);
+TinyHIDOutput hid_output(process_sidedoor_mouse_report);
+Repl repl(&settings, &hid_output);
 MouseFuzz mouse_fuzz(&hid_output);
 MouseLooper mouse_looper(&hid_output);
 MousePassthrough mouse_passthrough(&hid_output);
@@ -447,6 +449,15 @@ static void process_mouse_report(uint8_t dev_addr,
   active_device_type = HID_ITF_PROTOCOL_MOUSE;
   uint8_t slot = fx_enabled ? settings.getActiveFxSlot() : MAX_FX;
   mouse_fx[slot]->process_mouse_report((ha_mouse_report_t*)report, time_ms);
+}
+
+// process any report that does not come from a "real" mouse.
+static void process_sidedoor_mouse_report(uint8_t buttons, int8_t x, int8_t y) {
+  static hid_mouse_report_t report;
+  report.buttons = buttons;
+  report.x = x;
+  report.y = y;
+  process_mouse_report(0xFF, &report, MS_SINCE_BOOT);
 }
 
 inline uint8_t get_protocol_by_report_id(uint8_t id, uint8_t instance) {

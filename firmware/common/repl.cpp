@@ -48,6 +48,18 @@ void Repl::process(char* input) {
     persistence->resetToDefaults();
     refresh_settings();
     consumed = true;
+    // check for mouse command
+  } else if (i >= 2 && strcmp(slots[1], "m") == 0 && slots[2]) {
+    uint32_t mouse_packet = strtol(slots[2], NULL, 16);
+    if (mouse_packet > 0) {
+      uint8_t buttons = (mouse_packet >> 16) & 0x00FF;
+      int8_t x = (mouse_packet >> 8) & 0x00FF;
+      int8_t y = mouse_packet & 0x00FF;
+      hid_output->send_mouse_report(buttons, x, y, 0, 0, true);
+    } else {
+      log_line("invalid input, usage: cmd:m:[0x000000 - 0xFFFFFF]");
+    }
+    consumed = true;
     // check for setting of LED brightness
   } else if (i >= 2 && strcmp(slots[1], "brightness") == 0 && slots[2]) {
     int brightness = atoi(slots[2]);
