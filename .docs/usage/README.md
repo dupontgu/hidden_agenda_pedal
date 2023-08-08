@@ -122,3 +122,9 @@ All supported commands are documented below. Each command is sent to the device 
 * defaults to `off`
 * example: `cmd:invert_foot:on` (enables the inversion of the footswitch, which should read as 0 when untouched, 1 when held down)
 
+### `m` (mouse command)
+* Sends a hardcoded mouse "report" through the pedal's processing pipeline.
+* Can be used to script mouse movements and clicks from your computer.
+* parameter: 24 bit hex value, where the leftmost byte represents clicked buttons, the middle byte represents movement on the x axis (signed), and the lowest byte represents movement on the y axis (signed).
+* example: `cmd:m:0x0103FF` (fires off a mouse report that says the mouse has its left button pressed, moved 3 "pixels" to the left, and moved 1 "pixel" towards the top of the screen)
+
