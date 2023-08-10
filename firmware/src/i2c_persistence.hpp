@@ -1,7 +1,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include <algorithm>
+
 #include "persistence.hpp"
+#include "util.h"
 
 #ifndef HA_PERS_H
 #define HA_PERS_H
@@ -15,6 +18,7 @@ typedef struct ha_settings {
   uint8_t active_fx_slot;
   uint8_t report_parse_mode;
   uint8_t flags;
+  uint8_t mouse_speed_level;
   float led_brightness;
   uint32_t slot_colors[4];
 } settings_t;
@@ -29,8 +33,7 @@ class I2cPersistence : public IPersistence {
   settings_t delegate;
   bool enable_write = true;
   inline void set_bit_flag(bool enabled, uint8_t flag) {
-    delegate.flags = enabled ? delegate.flags | flag
-                             : delegate.flags & ~flag;
+    delegate.flags = enabled ? delegate.flags | flag : delegate.flags & ~flag;
   }
 
  public:
@@ -63,7 +66,9 @@ class I2cPersistence : public IPersistence {
     set_bit_flag(enabled, FLAG_FLASHING_ENABLED);
     write();
   }
-  inline bool isFlashingEnabled() { return delegate.flags & FLAG_FLASHING_ENABLED; }
+  inline bool isFlashingEnabled() {
+    return delegate.flags & FLAG_FLASHING_ENABLED;
+  }
   void setLedColor(uint8_t slot, uint32_t color) {
     delegate.slot_colors[slot] = color;
     write();
@@ -72,7 +77,16 @@ class I2cPersistence : public IPersistence {
     set_bit_flag(invert, FLAG_INVERT_FOOTSWITCH);
     write();
   }
-  inline bool shouldInvertFootswitch() { return delegate.flags & FLAG_INVERT_FOOTSWITCH; }
+  inline bool shouldInvertFootswitch() {
+    return delegate.flags & FLAG_INVERT_FOOTSWITCH;
+  }
+  inline void setMouseSpeedLevel(uint8_t level) {
+    delegate.mouse_speed_level = level;
+    write();
+  }
+  inline uint8_t getMouseSpeedLevel() {
+    return delegate.mouse_speed_level;
+  }
   inline uint32_t getLedColor(uint8_t slot) {
     return delegate.slot_colors[slot];
   }

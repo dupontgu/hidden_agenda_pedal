@@ -19,9 +19,12 @@ class InMemoryPersistence : public IPersistence {
   bool isFlashingEnabled() { return flashing_enabled; }
   void setShouldInvertFootswitch(bool invert) { invert_footswitch = invert; }
   bool shouldInvertFootswitch() { return invert_footswitch; }
+  void setMouseSpeedLevel(uint8_t level) { mouse_speed_level = level; }
+  uint8_t getMouseSpeedLevel() { return mouse_speed_level; }
   void resetToDefaults() {
     active_slot = 0;
     report_mode = 0;
+    mouse_speed_level = 0;
     raw_hid_logs_enabled = false;
     flashing_enabled = true;
     invert_footswitch = false;
@@ -35,6 +38,7 @@ class InMemoryPersistence : public IPersistence {
  private:
   uint8_t active_slot;
   uint8_t report_mode;
+  uint8_t mouse_speed_level;
   bool raw_hid_logs_enabled;
   bool flashing_enabled;
   bool invert_footswitch;

@@ -28,6 +28,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <cmath>
+
 #include "bsp/board.h"
 #include "hardware/adc.h"
 #include "hardware/watchdog.h"
@@ -118,6 +120,8 @@ static size_t log_read_head = 0;
 
 static char cdc_read_buffer[LOG_BUFFER_SIZE];
 static size_t cdc_read_head = 0;
+static ha_mouse_report_t pending_mouse_report;
+static bool mouse_report_ready = false;
 
 void log_line(const char* format, ...) {
   // shouldn't happen, but throw it away to be safe
@@ -324,6 +328,24 @@ void fx_task(uint32_t time_ms) {
   }
 }
 
+void mouse_task(uint32_t time_ms) {
+  static uint32_t last_report = 0;
+  static uint8_t cached_speed_level = 0xFF;
+  static float cached_speed = 1.0f;
+  if (time_ms - last_report < 6 || !mouse_report_ready) return;
+  ha_mouse_report_t* r = &pending_mouse_report;
+  mouse_report_ready = false;
+  last_report = time_ms;
+  if (cached_speed_level != settings.getMouseSpeedLevel()) {
+    cached_speed_level = settings.getMouseSpeedLevel();
+    cached_speed = (cached_speed_level * 0.25f) + 0.5f;
+  }
+  uint8_t slot = fx_enabled ? settings.getActiveFxSlot() : MAX_FX;
+  r->x = (int8_t)roundf((float)r->x * cached_speed);
+  r->y = (int8_t)roundf((float)r->y * cached_speed);
+  mouse_fx[slot]->process_mouse_report(r, time_ms);
+}
+
 void refresh_settings() {
   settings.initialize();
   for (size_t i = 0; i < MAX_FX; i++) {
@@ -378,6 +400,7 @@ int main(void) {
     led_task(time_ms);
     io_task(time_ms);
     fx_task(time_ms);
+    mouse_task(time_ms);
     flush_log();
     tud_task();  // tinyusb device task
     process_cdc_input();
@@ -447,9 +470,15 @@ static void process_mouse_report(uint8_t dev_addr,
                                  hid_mouse_report_t const* report,
                                  uint32_t time_ms) {
   (void)dev_addr;
+  (void)time_ms;
+  // buffer mouse updates to make sure they all get processed at a similar sample rate
   active_device_type = HID_ITF_PROTOCOL_MOUSE;
-  uint8_t slot = fx_enabled ? settings.getActiveFxSlot() : MAX_FX;
-  mouse_fx[slot]->process_mouse_report((ha_mouse_report_t*)report, time_ms);
+  pending_mouse_report.x += report->x;
+  pending_mouse_report.y += report->y;
+  pending_mouse_report.buttons = report->buttons;
+  pending_mouse_report.pan = report->pan;
+  pending_mouse_report.wheel = report->wheel;
+  mouse_report_ready = true;
 }
 
 inline uint8_t get_protocol_by_report_id(uint8_t id, uint8_t instance) {

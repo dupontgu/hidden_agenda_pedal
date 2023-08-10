@@ -21,6 +21,8 @@ class IPersistence {
   virtual void resetToDefaults() = 0;
   virtual bool shouldInvertFootswitch() = 0;
   virtual void setShouldInvertFootswitch(bool invert) = 0;
+  virtual uint8_t getMouseSpeedLevel() = 0;
+  virtual void setMouseSpeedLevel(uint8_t level) = 0;
   virtual ~IPersistence() = default;
 };
 #endif

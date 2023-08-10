@@ -109,6 +109,8 @@ class MouseFuzz : public IMouseFx {
       if (time_ms - last_dummy_sample > 5) {
         last_report.x = 0;
         last_report.y = 0;
+        last_report.wheel = 0;
+        last_report.pan = 0;
         process_with_filter(&last_report, time_ms);
         last_dummy_sample = time_ms;
       }

@@ -2,6 +2,7 @@
 #include <string.h>
 #include "test_persistence.hpp"
 #include "test_util.hpp"
+#include "test_hid_output.hpp"
 #include "repl.hpp"
 
 char in_buf[512] = { 0 };
@@ -23,8 +24,9 @@ void assert(std::string msg, bool b) {
 void test_repl() {
     std::cout << "start test_repl..." << std::endl;
     InMemoryPersistence p;
+    TestHIDOutput hid;
     p.initialize();
-    Repl repl(&p);
+    Repl repl(&p, &hid);
 
     // JUNK
     repl.process(input("junk1234"));
@@ -84,9 +86,17 @@ void test_repl() {
     repl.process(input("cmd:set_color:3:ffee"));
     assert("third led color should be 0x00ffee", p.getLedColor(2) == 0x00ffee);
 
+    //MOUSE SPEED
+    assert("mouse speed level should initially be 0", p.getMouseSpeedLevel() == 0);
+    repl.process(input("cmd:m_speed:100"));
+    assert("mouse speed level should still be 0", p.getMouseSpeedLevel() == 0);
+    repl.process(input("cmd:m_speed:3"));
+    assert("mouse speed level should be 2", p.getMouseSpeedLevel() == 2);
+
     //RESET DEFAULTS
     repl.process(input("cmd:reset"));
     assert("third led color should be reset to 0", p.getLedColor(2) == 0);
+    assert("mouse speed should be reset to 0", p.getMouseSpeedLevel() == 0);
     assert("brightness should be reset to 0", p.getLedBrightness() == 0.0f);
 
     dump_logs();

@@ -3,6 +3,8 @@
 
 **Also - this device will perform mouse movements and keystrokes on your behalf! Exit out of any important work before using. I take no responsibility if you accidentally delete something!**
 
+**Also also - the refresh rate of this device's mouse output may not match your mouse's refresh rate. This will lower the performance of any high-speed gaming mice! Maximum output refresh rate is ~170hz, even in passthrough mode.**
+
 ## Quick Start
 1. Plug the Hidden Agenda into your computer using the USB-C port on the left side of the pedal.
 2. Plug your USB mouse or keyboard (or USB dongle for wireless mice/keyboards) into the USB-A port on the right side of the pedal.
@@ -127,4 +129,10 @@ All supported commands are documented below. Each command is sent to the device 
 * Can be used to script mouse movements and clicks from your computer.
 * parameter: 24 bit hex value, where the leftmost byte represents clicked buttons, the middle byte represents movement on the x axis (signed), and the lowest byte represents movement on the y axis (signed).
 * example: `cmd:m:0x0103FF` (fires off a mouse report that says the mouse has its left button pressed, moved 3 "pixels" to the left, and moved 1 "pixel" towards the top of the screen)
+
+### `m_speed` (mouse command)
+* Sets a mouse speed adjustment factor, from 0.5X to 1.5X.
+* parameter: integer between 1 and 5 (inclusive). `1` sets your mouse to half speed, `5` sets to 1.5X speed.
+* defaults to `2`
+* example: `cmd:m_speed:3` (sets mouse speed to 1.25X)
 

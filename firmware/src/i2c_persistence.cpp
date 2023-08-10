@@ -16,10 +16,12 @@ static bool initialized = false;
 
 static settings_t default_settings = {
     // VERSION MUST ALWAYS STAY FIRST!!!!!
-    .version = 1,
+    .version = 2,
     .active_fx_slot = 0,
     .report_parse_mode = 0,
     .flags = FLAG_FLASHING_ENABLED,
+    // 0-4
+    .mouse_speed_level = 2,
     .led_brightness = 0.7,
     .slot_colors = {0xFFFF4000, 0xFF4000FF, 0xFF00FF40, 0xFFAA0070}};
 
@@ -178,6 +180,7 @@ settings_t migrate(uint8_t from, uint8_t to, void *persisted) {
   (void)from;
   (void)to;
   (void)persisted;
+  log_line("migrating settings from version %u to %u", from, to);
   return default_settings;
 }
 

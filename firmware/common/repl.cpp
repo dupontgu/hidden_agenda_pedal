@@ -74,6 +74,20 @@ void Repl::process(char* input) {
       log_line("invalid input, usage: cmd:brightness:[1-100]");
     }
     consumed = true;
+    // check for mouse speed level
+  } else if (i >= 2 && strcmp(slots[1], "m_speed") == 0 && slots[2]) {
+    int speed_level = atoi(slots[2]);
+    if (speed_level > 0) {
+      if (speed_level < 6) {
+        persistence->setMouseSpeedLevel(speed_level - 1);
+        log_line("set mouse level to: %u", speed_level);
+      } else {
+        log_line("please enter speed level integer between 1 - 5");
+      }
+    } else {
+      log_line("invalid input, usage: cmd:m_speed:[1-5]");
+    }
+    consumed = true;
     // check for enabling of raw hid logging
   } else if (i >= 2 && strcmp(slots[1], "raw_hid") == 0 && slots[2]) {
     if (strcmp(slots[2], "on") == 0) {
