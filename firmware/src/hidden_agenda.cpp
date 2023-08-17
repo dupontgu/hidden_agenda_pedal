@@ -473,6 +473,10 @@ static void process_mouse_report(uint8_t dev_addr,
   (void)time_ms;
   // buffer mouse updates to make sure they all get processed at a similar sample rate
   active_device_type = HID_ITF_PROTOCOL_MOUSE;
+  if (!mouse_report_ready) {
+    pending_mouse_report.x = 0;
+    pending_mouse_report.y = 0;
+  }
   pending_mouse_report.x += report->x;
   pending_mouse_report.y += report->y;
   pending_mouse_report.buttons = report->buttons;
