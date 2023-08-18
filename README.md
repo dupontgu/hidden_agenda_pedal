@@ -1,10 +1,9 @@
-# This project is not yet meant to be public shhhh!!
-Please don't publish anything about it until I iron out the final details, thank you!!
-
 # Hidden Agenda
  **A multi-effects pedal for your mouse and keyboard!**
 
  Have you ever wanted to add reverb to your mouse cursor and sending sailing gently accross your screen? Have you ever wished you could emphatically stomp on something to engage caps lock before ripping an angry email to your manager or tweeting at an airline? No? Well, I made this anyways.
+
+ [![YouTube Thumbnail](https://img.youtube.com/vi/4DGEuZlxPWg/0.jpg)](https://www.youtube.com/watch?v=4DGEuZlxPWg)
 
  ## Contents
  * [How it works](#how-it-works) (at a high level)
