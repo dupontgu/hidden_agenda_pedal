@@ -58,7 +58,6 @@
 #define GENERIC_DESKTOP_USAGE_PAGE 0x01
 #define USAGE_MOUSE 0x02
 #define USAGE_KEYBOARD 0x06
-#define SYNTHESIZED_MOUSE_REPORT_INSTANCE 0xFF
 
 #define MS_SINCE_BOOT to_ms_since_boot(get_absolute_time())
 #define SOFT_BOOT_BTN_GPIO 0
@@ -81,6 +80,7 @@
 #define ADC_DEAD_ZONE 0.015f
 
 #define LOG_BUFFER_SIZE 1024
+#define NO_OFFICIAL_INSTANCE 0xFF
 
 static struct {
   uint8_t report_count;
@@ -122,6 +122,9 @@ static char cdc_read_buffer[LOG_BUFFER_SIZE];
 static size_t cdc_read_head = 0;
 static ha_mouse_report_t pending_mouse_report;
 static bool mouse_report_ready = false;
+
+static uint8_t official_mouse_instance = NO_OFFICIAL_INSTANCE;
+static uint8_t official_kb_instance = NO_OFFICIAL_INSTANCE;
 
 void log_line(const char* format, ...) {
   // shouldn't happen, but throw it away to be safe
@@ -443,6 +446,13 @@ void tuh_hid_mount_cb(uint8_t dev_addr, uint8_t instance,
   if (itf_protocol == HID_ITF_PROTOCOL_KEYBOARD ||
       itf_protocol == HID_ITF_PROTOCOL_MOUSE) {
     active_device_type = itf_protocol;
+    if (itf_protocol == HID_ITF_PROTOCOL_KEYBOARD) {
+      official_kb_instance = instance;
+      log_line("using instance %u for keyboard.", instance);
+    } else if (itf_protocol == HID_ITF_PROTOCOL_MOUSE) {
+      official_mouse_instance = instance;
+      log_line("using instance %u for mouse.", instance);
+    }
   }
 
   if (!tuh_hid_receive_report(dev_addr, instance)) {
@@ -452,13 +462,19 @@ void tuh_hid_mount_cb(uint8_t dev_addr, uint8_t instance,
 
 // Invoked when device with hid interface is un-mounted
 void tuh_hid_umount_cb(uint8_t dev_addr, uint8_t instance) {
+  if (official_kb_instance == instance)
+    official_kb_instance = NO_OFFICIAL_INSTANCE;
+  if (official_mouse_instance == instance)
+    official_mouse_instance = NO_OFFICIAL_INSTANCE;
   log_line("[%u] HID%u unmounted", dev_addr, instance);
 }
 
-static void process_kbd_report(uint8_t dev_addr,
+static void process_kbd_report(uint8_t instance,
                                hid_keyboard_report_t const* report,
                                uint32_t time_ms) {
-  (void)dev_addr;
+  if (official_kb_instance != NO_OFFICIAL_INSTANCE &&
+      instance != official_kb_instance)
+    return;
   active_device_type = HID_ITF_PROTOCOL_KEYBOARD;
   uint8_t slot = fx_enabled ? settings.getActiveFxSlot() : MAX_FX;
   keyboard_fx[slot]->process_keyboard_report((ha_keyboard_report_t*)report,
@@ -466,12 +482,15 @@ static void process_kbd_report(uint8_t dev_addr,
 }
 
 // send mouse report to usb device CDC
-static void process_mouse_report(uint8_t dev_addr,
+static void process_mouse_report(uint8_t instance,
                                  hid_mouse_report_t const* report,
                                  uint32_t time_ms) {
-  (void)dev_addr;
   (void)time_ms;
-  // buffer mouse updates to make sure they all get processed at a similar sample rate
+  if (official_mouse_instance != NO_OFFICIAL_INSTANCE &&
+      instance != official_mouse_instance)
+    return;
+  // buffer mouse updates to make sure they all get processed at a similar
+  // sample rate
   active_device_type = HID_ITF_PROTOCOL_MOUSE;
   if (!mouse_report_ready) {
     pending_mouse_report.x = 0;
@@ -511,8 +530,8 @@ void tuh_hid_report_received_cb(uint8_t dev_addr, uint8_t instance,
   static uint32_t last_report_time = 0;
   uint32_t time_ms = MS_SINCE_BOOT;
   if (settings.areRawHidLogsEnabled()) {
-    size_t log_i =
-        sprintf(hid_log_buff, "Δ: %lu, hid:", time_ms - last_report_time);
+    size_t log_i = sprintf(hid_log_buff, "id: %u, Δ: %lu, hid:", instance,
+                           time_ms - last_report_time);
     for (size_t i = 0; i < len; i++) {
       log_i += sprintf(hid_log_buff + log_i, " %02x", report[i]);
     }
@@ -524,7 +543,7 @@ void tuh_hid_report_received_cb(uint8_t dev_addr, uint8_t instance,
   uint8_t const* report_offset = report;
   bool used_synthesized_report = false;
 
-  if (instance == SYNTHESIZED_MOUSE_REPORT_INSTANCE) {
+  if (instance == NO_OFFICIAL_INSTANCE) {
     used_synthesized_report = true;
     itf_protocol = HID_ITF_PROTOCOL_MOUSE;
   } else if (hid_info[instance].report_count > 2) {
@@ -548,12 +567,12 @@ void tuh_hid_report_received_cb(uint8_t dev_addr, uint8_t instance,
 
   switch (itf_protocol) {
     case HID_ITF_PROTOCOL_KEYBOARD:
-      process_kbd_report(dev_addr, (hid_keyboard_report_t const*)report_offset,
+      process_kbd_report(instance, (hid_keyboard_report_t const*)report_offset,
                          time_ms);
       break;
 
     case HID_ITF_PROTOCOL_MOUSE:
-      process_mouse_report(dev_addr, (hid_mouse_report_t const*)report_offset,
+      process_mouse_report(instance, (hid_mouse_report_t const*)report_offset,
                            time_ms);
       break;
 
@@ -573,8 +592,8 @@ static void process_sidedoor_mouse_report(uint8_t buttons, int8_t x, int8_t y) {
   report.buttons = buttons;
   report.x = x;
   report.y = y;
-  tuh_hid_report_received_cb(0, SYNTHESIZED_MOUSE_REPORT_INSTANCE,
-                             (const uint8_t*)&report, sizeof(report));
+  tuh_hid_report_received_cb(0, NO_OFFICIAL_INSTANCE, (const uint8_t*)&report,
+                             sizeof(report));
 }
 
 void tud_cdc_rx_cb(uint8_t itf) {
