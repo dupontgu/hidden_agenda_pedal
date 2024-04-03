@@ -81,6 +81,7 @@ if not eeprom_test():
         pixel.show()
         time.sleep(0.2)
 
+print("EEPROM Test Passed...")
 tgl0 = digitalio.DigitalInOut(board.D8)
 tgl0.pull = digitalio.Pull.UP
 tgl0_v = tgl0.value
@@ -95,6 +96,7 @@ boot_btn.pull = digitalio.Pull.UP
 foot_sw = digitalio.DigitalInOut(board.A2)
 foot_sw.pull = digitalio.Pull.UP
 foot_sw_v = foot_sw.value
+print("Default foot switch value:", foot_sw_v)
 
 analog_in = AnalogIn(board.A0)
 
@@ -116,7 +118,7 @@ while True:
     if (foot_sw.value != foot_sw_v):
         foot_sw_v = foot_sw.value
         print("FOOT_SW switched:", foot_sw_v)
-    foot_hold_count = foot_hold_count + 1 if foot_sw_v else 0
+    foot_hold_count = foot_hold_count + 1 if not foot_sw_v else 0
     if (foot_hold_count > 60):
         reset_to_bootloader()
     r = 0 if tgl0_v else 255
